@@ -12,6 +12,57 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('scroll', handleScroll);
     handleScroll();
 
+    // ===== LAZY LOAD HERO VIDEO (INJECT AFTER PAGE LOAD) =====
+    var heroWrap = document.getElementById('hero-video-wrap');
+    if (heroWrap) {
+        function injectHeroVideo() {
+
+
+            var themeUrl = heroWrap.querySelector('.hero-poster').src;
+            var baseUrl = themeUrl.substring(0, themeUrl.lastIndexOf('/assets/')) + '/assets/videos/';
+
+            var video = document.createElement('video');
+            video.className = 'hero-bg-video';
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.setAttribute('aria-hidden', 'true');
+
+            // Try WebM first (smaller), fallback to MP4
+            var sourceWebm = document.createElement('source');
+            sourceWebm.src = baseUrl + 'hero-bg.webm';
+            sourceWebm.type = 'video/webm';
+
+            var sourceMp4 = document.createElement('source');
+            sourceMp4.src = baseUrl + 'hero-bg.mp4';
+            sourceMp4.type = 'video/mp4';
+
+            video.appendChild(sourceWebm);
+            video.appendChild(sourceMp4);
+
+            // Insert video before the overlay
+            var overlay = heroWrap.querySelector('.hero-video-overlay');
+            heroWrap.insertBefore(video, overlay);
+
+            video.play().then(function () {
+                // Fade out poster once video is playing
+                var poster = heroWrap.querySelector('.hero-poster');
+                if (poster) poster.classList.add('hidden');
+            }).catch(function () {
+                // Autoplay blocked — poster stays, no problem
+            });
+        }
+
+        // Wait until page is fully loaded (all other assets done)
+        if (document.readyState === 'complete') {
+            setTimeout(injectHeroVideo, 100);
+        } else {
+            window.addEventListener('load', function () {
+                setTimeout(injectHeroVideo, 100);
+            });
+        }
+    }
+
     // ===== HAMBURGER MENU =====
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
@@ -55,6 +106,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 dropdown.classList.toggle('active');
             }
         });
+
+        // Desktop: show dropdown on hover
+        if (dropdown) {
+            dropdown.addEventListener('mouseenter', function () {
+                if (window.innerWidth > 992) {
+                    dropdown.classList.add('active');
+                }
+            });
+            dropdown.addEventListener('mouseleave', function () {
+                if (window.innerWidth > 992) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
     }
 
     // ===== SMOOTH SCROLL =====

@@ -13,7 +13,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 
             <!-- Column 1: About + Contact Details -->
             <div class="footer-col footer-about">
-                <h4>EDEN INFOSOL PRIVATE LIMITED</h4>
+                <p class="footer-heading">EDEN INFOSOL PRIVATE LIMITED</p>
                 <p>A full-spectrum technology solutions company serving Small and Medium Businesses
                     to Enterprises. One
                     trusted partner. End-to-end capability.</p>
@@ -53,7 +53,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 
             <!-- Column 2: Products & Services -->
             <div class="footer-col">
-                <h4>Products & Services</h4>
+                <p class="footer-heading">Products & Services</p>
                 <ul>
                     <li><a href="<?php echo esc_url($products_url . '#digital-connectivity'); ?>">Connectivity & Digital
                             Transformation
@@ -72,7 +72,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 
             <!-- Column 3: Company -->
             <div class="footer-col">
-                <h4>Company</h4>
+                <p class="footer-heading">Company</p>
                 <ul>
                     <li><a href="<?php echo esc_url($about_url); ?>">About Us</a></li>
                     <li><a href="<?php echo esc_url($about_url . '#vision-mission'); ?>">Vision & Mission</a></li>
@@ -83,7 +83,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 
             <!-- Column 4: Quick Links -->
             <div class="footer-col">
-                <h4>Quick Links</h4>
+                <p class="footer-heading">Quick Links</p>
 
                 <ul>
                     <li><a href="<?php echo esc_url($bytes_url); ?>">Eden Bytes</a></li>

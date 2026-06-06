@@ -1,39 +1,42 @@
 <?php
+/*
+Template Name: Front Page
+*/
 if (!defined('ABSPATH'))
     exit;
 get_header();
 
 $products_url = eden_get_page_url('products', home_url('/products/'));
+$about_url = eden_get_page_url('about', home_url('/about/'));
 $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
+$bytes_url = eden_get_page_url('eden-bytes', home_url('/eden-bytes/'));
 $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
+$founded = new DateTime('2011-01-01');
+$now = new DateTime();
 ?>
 
+<!-- ===== HERO WITH OPTIMIZED VIDEO ===== -->
 <section class="hero hero-video-section">
-    <div class="hero-video-wrap">
-        <video class="hero-bg-video" autoplay muted loop playsinline>
-            <source src="<?php echo esc_url(get_template_directory_uri() . '/assets/videos/hero-bg.mp4'); ?>"
-                type="video/mp4">
-        </video>
+    <div class="hero-video-wrap" id="hero-video-wrap">
+        <!-- Poster loads instantly — video injected by JS after page load -->
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/hero-poster.png'); ?>"
+            alt="Eden Infosol - IT & Cybersecurity Solutions" class="hero-poster" fetchpriority="high" width="1280"
+            height="720">
         <div class="hero-video-overlay"></div>
     </div>
+
     <div class="hero-content">
-        <h1 class="hero-anim">
-            Transforming Vision Into
-            <span class="highlight">Solutions</span>
-        </h1>
-        <p class="hero-anim">From infrastructure and connectivity to cloud, through cybersecurity and managed services,
-            We help
-            businesses design, deploy, secure and manage their entire IT environment. One trusted partner. End-to-end
-            capability.
-        </p>
-        <div class="hero-buttons hero-anim">
+        <h1>Transforming Vision Into <span class="highlight">Solutions</span></h1>
+        <p>From infrastructure and connectivity to cloud, through cybersecurity and managed services,
+            We help businesses design, deploy, secure and manage their entire IT environment. One trusted partner.
+            End-to-end capability.</p>
+        <div class="hero-buttons">
             <a href="<?php echo esc_url($contact_url . '?interest=consultation'); ?>" class="btn btn-primary">Book a
                 Free Consultation</a>
             <a href="<?php echo esc_url($products_url); ?>" class="btn btn-secondary">Explore Our Services</a>
         </div>
     </div>
 </section>
-
 <section class="section section-white" id="about">
     <div class="container">
         <div class="about-grid">

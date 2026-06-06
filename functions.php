@@ -211,7 +211,7 @@ function eden_handle_contact_form()
 
     // ---- SEND EMAIL TO EDEN TEAM ----
     // >>> CHANGE THIS TO YOUR EMAIL <<<
-    $to = 'hiren.sheth@edeninfosol.com';
+    $to = 'abhishek.sheth@edeninfosol.com';
 
     $subject = 'New Enquiry: ' . $interest . ' - ' . $first_name . ' ' . $last_name;
 
@@ -332,4 +332,200 @@ function eden_contacts_admin_page()
         echo '<p style="margin-top:15px;color:#666;">Total: ' . count($results) . ' submissions</p>';
     }
     echo '</div>';
+
 }
+
+// =============================================
+// 9. SEO - META TITLE, DESCRIPTION, OG & TWITTER
+// =============================================
+
+// 9A. Shorten & customize meta title (50-60 chars)
+function eden_custom_document_title($title_parts)
+{
+    if (is_front_page()) {
+        $title_parts['title'] = 'Eden Infosol | IT & Cybersecurity Solutions';
+    }
+    unset($title_parts['tagline']);
+    return $title_parts;
+}
+add_filter('document_title_parts', 'eden_custom_document_title');
+
+function eden_title_separator($sep)
+{
+    return '|';
+}
+add_filter('document_title_separator', 'eden_title_separator');
+
+// 9B. Meta Description, Open Graph, Twitter Cards
+function eden_seo_head_tags()
+{
+    $site_name = 'Eden Infosol';
+    $default_image = get_template_directory_uri() . '/assets/logos/logo.png';
+    $site_url = home_url('/');
+
+    // Defaults
+    $title = get_the_title() . ' | ' . $site_name;
+    $description = 'Eden Infosol — Full-spectrum IT solutions for SMBs & enterprises. Infrastructure, cybersecurity, cloud, and managed services. One trusted partner.';
+    $url = is_front_page() ? $site_url : get_permalink();
+    $type = 'website';
+
+    // Page-specific SEO
+    if (is_front_page()) {
+        $title = 'Eden Infosol | IT & Cybersecurity Solutions';
+        $description = 'Full-spectrum IT solutions for SMBs & enterprises in Mumbai — infrastructure, cybersecurity, cloud, and managed services. One trusted partner.';
+    } elseif (is_page('products') || is_page('products-services')) {
+        $title = 'Products & Services | Eden Infosol';
+        $description = 'Explore our full IT portfolio — connectivity, infrastructure, cybersecurity, cloud & data center, and professional services backed by certified expertise.';
+    } elseif (is_page('about')) {
+        $title = 'About Us | Eden Infosol';
+        $description = '15+ years of IT expertise, vendor-agnostic guidance, and end-to-end technology solutions for businesses across India.';
+    } elseif (is_page('contact') || is_page('contact-us')) {
+        $title = 'Contact Us | Eden Infosol';
+        $description = 'Get in touch with Eden Infosol for IT infrastructure, cybersecurity, cloud, and managed services. Based in Mumbai, serving businesses across India.';
+    } elseif (is_page('assessment')) {
+        $title = 'Free IT Assessment | Eden Infosol';
+        $description = 'Request a free IT assessment from Eden Infosol. Our experts will evaluate your infrastructure, security, and cloud readiness.';
+    } elseif (is_page('eden-bytes')) {
+        $title = 'Eden Bytes | Eden Infosol';
+        $description = 'Insights, case studies, and technology perspectives from the Eden Infosol team.';
+    }
+
+    // Meta Description
+    echo '<meta name="description" content="' . esc_attr($description) . '">' . "\n";
+
+    // Open Graph Tags
+    echo '<meta property="og:type" content="' . esc_attr($type) . '">' . "\n";
+    echo '<meta property="og:title" content="' . esc_attr($title) . '">' . "\n";
+    echo '<meta property="og:description" content="' . esc_attr($description) . '">' . "\n";
+    echo '<meta property="og:url" content="' . esc_url($url) . '">' . "\n";
+    echo '<meta property="og:site_name" content="' . esc_attr($site_name) . '">' . "\n";
+    echo '<meta property="og:image" content="' . esc_url($default_image) . '">' . "\n";
+    echo '<meta property="og:locale" content="en_IN">' . "\n";
+
+    // Twitter Card Tags
+    echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+    echo '<meta name="twitter:title" content="' . esc_attr($title) . '">' . "\n";
+    echo '<meta name="twitter:description" content="' . esc_attr($description) . '">' . "\n";
+    echo '<meta name="twitter:image" content="' . esc_url($default_image) . '">' . "\n";
+}
+add_action('wp_head', 'eden_seo_head_tags', 1);
+
+// =============================================
+// 10. PERFORMANCE OPTIMIZATIONS
+// =============================================
+
+// 10A. Add defer attribute to non-critical scripts
+function eden_defer_scripts($tag, $handle, $src)
+{
+    // Don't defer critical scripts
+    $no_defer = array('jquery', 'wp-embed');
+    if (in_array($handle, $no_defer)) {
+        return $tag;
+    }
+    // Add defer to all other scripts
+    if (strpos($tag, 'defer') === false && strpos($tag, 'async') === false) {
+        $tag = str_replace(' src=', ' defer src=', $tag);
+    }
+    return $tag;
+}
+add_filter('script_loader_tag', 'eden_defer_scripts', 10, 3);
+
+// 10B. Remove WordPress emoji scripts (unnecessary bloat)
+remove_action('wp_head', 'print_emoji_detection_script', 7);
+remove_action('wp_print_styles', 'print_emoji_styles');
+remove_action('admin_print_scripts', 'print_emoji_detection_script');
+remove_action('admin_print_styles', 'print_emoji_styles');
+
+// 10C. Remove WordPress embed script
+function eden_deregister_scripts()
+{
+    wp_dequeue_script('wp-embed');
+}
+add_action('wp_footer', 'eden_deregister_scripts');
+
+// 10D. Remove jQuery migrate (not needed for custom theme)
+function eden_remove_jquery_migrate($scripts)
+{
+    if (!is_admin() && isset($scripts->registered['jquery'])) {
+        $script = $scripts->registered['jquery'];
+        if ($script->deps) {
+            $script->deps = array_diff($script->deps, array('jquery-migrate'));
+        }
+    }
+}
+add_action('wp_default_scripts', 'eden_remove_jquery_migrate');
+
+// =============================================
+// 11. SITEMAP.XML GENERATOR
+// =============================================
+function eden_generate_sitemap()
+{
+    // Only regenerate when a page is saved
+    $pages = get_pages(array('status' => 'publish'));
+    $home = home_url('/');
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+    // Homepage (highest priority)
+    $xml .= '  <url>' . "\n";
+    $xml .= '    <loc>' . esc_url($home) . '</loc>' . "\n";
+    $xml .= '    <changefreq>weekly</changefreq>' . "\n";
+    $xml .= '    <priority>1.0</priority>' . "\n";
+    $xml .= '  </url>' . "\n";
+
+    // All published pages
+    foreach ($pages as $page) {
+        $url = get_permalink($page->ID);
+        if ($url === $home)
+            continue; // skip duplicate homepage
+
+        $modified = get_the_modified_date('Y-m-d', $page->ID);
+        $priority = '0.8';
+
+        // Boost important pages
+        if (in_array($page->post_name, array('products', 'products-services', 'about', 'contact', 'contact-us'))) {
+            $priority = '0.9';
+        }
+
+        $xml .= '  <url>' . "\n";
+        $xml .= '    <loc>' . esc_url($url) . '</loc>' . "\n";
+        $xml .= '    <lastmod>' . $modified . '</lastmod>' . "\n";
+        $xml .= '    <changefreq>monthly</changefreq>' . "\n";
+        $xml .= '    <priority>' . $priority . '</priority>' . "\n";
+        $xml .= '  </url>' . "\n";
+    }
+
+    $xml .= '</urlset>';
+
+    // Write to root
+    $sitemap_path = ABSPATH . 'sitemap.xml';
+    file_put_contents($sitemap_path, $xml);
+}
+add_action('save_post', 'eden_generate_sitemap');
+add_action('after_switch_theme', 'eden_generate_sitemap');
+
+// Generate on first visit if missing
+function eden_maybe_generate_sitemap()
+{
+    if (!file_exists(ABSPATH . 'sitemap.xml')) {
+        eden_generate_sitemap();
+    }
+}
+add_action('init', 'eden_maybe_generate_sitemap');
+
+// =============================================
+// 12. ADD PRELOAD HINTS FOR CRITICAL ASSETS
+// =============================================
+function eden_resource_hints()
+{
+    // Preload hero poster image (fixes LCP)
+    if (is_front_page()) {
+        $poster = get_template_directory_uri() . '/assets/images/hero-poster.jpg';
+        echo '<link rel="preload" as="image" href="' . esc_url($poster) . '">' . "\n";
+    }
+
+    // Preload main stylesheet
+    echo '<link rel="preload" as="style" href="' . esc_url(get_stylesheet_uri()) . '">' . "\n";
+}
+add_action('wp_head', 'eden_resource_hints', 0);

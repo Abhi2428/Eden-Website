@@ -15,6 +15,10 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -24,6 +28,14 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 <body <?php body_class(); ?>>
     <nav class="navbar">
         <div class="container">
+
+            <!-- Hamburger FIRST = appears on LEFT -->
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
             <a href="<?php echo esc_url($home_url); ?>" class="nav-brand">
                 <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/logos/logo.png'); ?>"
                     alt="Eden Infosol" class="nav-brand-logo">
@@ -36,7 +48,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
             <ul class="nav-links">
                 <li><a href="<?php echo esc_url($home_url); ?>">Home</a></li>
                 <li class="dropdown">
-                    <a href="<?php echo esc_url($products_url); ?>">Products & Services <i
+                    <a href="<?php echo esc_url($products_url); ?>" class="dropdown-toggle">Products & Services <i
                             class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-menu">
                         <a href="<?php echo esc_url($products_url . '#digital-connectivity'); ?>"><i
@@ -56,9 +68,20 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
                 <li><a href="<?php echo esc_url($contact_url); ?>">Contact Us</a></li>
                 <li class="nav-cta"><a href="<?php echo esc_url($assess_url); ?>" class="btn btn-primary">Get Your
                         Assessment</a></li>
+
+                <!-- Social icons INSIDE nav-links = shows in mobile sidebar -->
+                <li class="sidebar-social">
+                    <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
+                        aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://www.facebook.com/edeninfosol" target="_blank" rel="noopener"
+                        aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://maps.google.com/?q=Eden+Infosol+Mumbai" target="_blank" rel="noopener"
+                        aria-label="Google Maps"><i class="fas fa-map-marker-alt"></i></a>
+                </li>
             </ul>
 
-            <div class="nav-social">
+            <!-- Desktop-only social icons (outside nav-links) -->
+            <div class="nav-social desktop-only-social">
                 <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
                     aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                 <a href="https://www.facebook.com/edeninfosol" target="_blank" rel="noopener" aria-label="Facebook"><i
@@ -67,10 +90,5 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
                     aria-label="Google Maps"><i class="fas fa-map-marker-alt"></i></a>
             </div>
 
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
         </div>
     </nav>

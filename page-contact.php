@@ -42,7 +42,7 @@ get_header();
                         <div class="contact-info-icon"><i class="fas fa-clock"></i></div>
                         <div>
                             <small>Business Hours</small>
-                            <p>Mon – Sat: 9:30 AM – 6:30 PM IST</p>
+                            <p>Mon – Fri: 9:30 AM – 6:30 PM IST</p>
                         </div>
                     </div>
                 </div>
