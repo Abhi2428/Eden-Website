@@ -1,58 +1,76 @@
-<?php if (!defined('ABSPATH')) exit; ?>
+<?php
+if (!defined('ABSPATH'))
+    exit;
+
+$home_url = home_url('/');
+$products_url = eden_get_page_url('products', home_url('/products/'));
+$bytes_url = eden_get_page_url('eden-bytes', home_url('/eden-bytes/'));
+$about_url = eden_get_page_url('about', home_url('/about/'));
+$contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
+$assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
+?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
+
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <?php wp_head(); ?>
 </head>
+
 <body <?php body_class(); ?>>
-<?php wp_body_open(); ?>
-
-<?php
-$home_url     = home_url('/');
-$products_url = eden_get_page_url('products', home_url('/products/'));
-$about_url    = eden_get_page_url('about', home_url('/about/'));
-$contact_url  = eden_get_page_url('contact-us', home_url('/contact-us/'));
-
-?>
-
-<nav class="navbar">
-    <div class="container">
-        <a href="<?php echo esc_url($home_url); ?>" class="nav-logo">
-            <span>EDEN</span>INFOSOL
-        </a>
-
-        <ul class="nav-links">
-            <li><a href="<?php echo esc_url($home_url); ?>">Home</a></li>
-
-            <li class="dropdown">
-                <a href="<?php echo esc_url($products_url); ?>" class="dropdown-toggle">
-                    Products &amp; Services <i class="fas fa-chevron-down"></i>
-                </a>
-                <div class="dropdown-menu">
-                    <a href="<?php echo esc_url($products_url . '#it-infrastructure'); ?>"><i class="fas fa-server"></i> IT Infrastructure</a>
-                    <a href="<?php echo esc_url($products_url . '#cloud-datacenter'); ?>"><i class="fas fa-cloud"></i> Cloud &amp; Data Center</a>
-                    <a href="<?php echo esc_url($products_url . '#cybersecurity'); ?>"><i class="fas fa-shield-halved"></i> Cybersecurity</a>
-                    <a href="<?php echo esc_url($products_url . '#managed-services'); ?>"><i class="fas fa-headset"></i> Managed Services</a>
-                    <a href="<?php echo esc_url($products_url . '#connectivity-voice'); ?>"><i class="fas fa-phone-volume"></i> Connectivity &amp; Voice</a>
-                    <a href="<?php echo esc_url($products_url . '#audits-compliance'); ?>"><i class="fas fa-clipboard-check"></i> Audits &amp; Compliance</a>
-                    <a href="<?php echo esc_url($products_url . '#digital-solutions'); ?>"><i class="fas fa-laptop-code"></i> Digital Solutions</a>
+    <nav class="navbar">
+        <div class="container">
+            <a href="<?php echo esc_url($home_url); ?>" class="nav-brand">
+                <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/logos/logo.png'); ?>"
+                    alt="Eden Infosol" class="nav-brand-logo">
+                <div class="nav-brand-text">
+                    <span class="nav-logo">EDEN <span>INFOSOL</span></span>
+                    <span class="nav-tagline">An IT Infrastructure & Cybersecurity Solutions Company</span>
                 </div>
-            </li>
+            </a>
 
-            <li><a href="<?php echo esc_url($about_url); ?>">About Us</a></li>
-        
+            <ul class="nav-links">
+                <li><a href="<?php echo esc_url($home_url); ?>">Home</a></li>
+                <li class="dropdown">
+                    <a href="<?php echo esc_url($products_url); ?>">Products & Services <i
+                            class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-menu">
+                        <a href="<?php echo esc_url($products_url . '#digital-connectivity'); ?>"><i
+                                class="fas fa-satellite-dish"></i> Connectivity & Digital Transformation</a>
+                        <a href="<?php echo esc_url($products_url . '#it-infrastructure'); ?>"><i
+                                class="fas fa-server"></i> IT Infrastructure</a>
+                        <a href="<?php echo esc_url($products_url . '#cybersecurity'); ?>"><i
+                                class="fas fa-shield-halved"></i> Cybersecurity</a>
+                        <a href="<?php echo esc_url($products_url . '#cloud-datacenter'); ?>"><i
+                                class="fas fa-cloud"></i> Cloud & Data Center</a>
+                        <a href="<?php echo esc_url($products_url . '#managed-services'); ?>"><i
+                                class="fas fa-headset"></i> Professional Services</a>
+                    </div>
+                </li>
+                <li><a href="<?php echo esc_url($bytes_url); ?>">EdenBytes</a></li>
+                <li><a href="<?php echo esc_url($about_url); ?>">About Us</a></li>
+                <li><a href="<?php echo esc_url($contact_url); ?>">Contact Us</a></li>
+                <li class="nav-cta"><a href="<?php echo esc_url($assess_url); ?>" class="btn btn-primary">Get Your
+                        Assessment</a></li>
+            </ul>
 
-            <li><a href="<?php echo esc_url($contact_url); ?>">Contact Us</a></li>
-            <li class="nav-cta"><a href="<?php echo esc_url($contact_url); ?>" class="btn btn-primary">Get Your Free Assessment</a></li>
+            <div class="nav-social">
+                <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
+                    aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                <a href="https://www.facebook.com/edeninfosol" target="_blank" rel="noopener" aria-label="Facebook"><i
+                        class="fab fa-facebook-f"></i></a>
+                <a href="https://maps.google.com/?q=Eden+Infosol+Mumbai" target="_blank" rel="noopener"
+                    aria-label="Google Maps"><i class="fas fa-map-marker-alt"></i></a>
+            </div>
 
-        </ul>
-
-        <div class="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
