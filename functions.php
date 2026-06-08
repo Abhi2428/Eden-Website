@@ -456,35 +456,48 @@ function eden_remove_jquery_migrate($scripts)
 add_action('wp_default_scripts', 'eden_remove_jquery_migrate');
 
 // =============================================
-// 11. SITEMAP.XML GENERATOR
+// 11. SITEMAP.XML GENERATOR (CLEAN)
 // =============================================
 function eden_generate_sitemap()
 {
-    // Only regenerate when a page is saved
-    $pages = get_pages(array('status' => 'publish'));
     $home = home_url('/');
+
+    // Pages to include (only your real pages by slug)
+    $include_slugs = array(
+        'products',
+        'products-services',
+        'about',
+        'contact-us',
+        'contact',
+        'assessment',
+        'eden-bytes',
+    );
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
-    // Homepage (highest priority)
+    // Homepage
     $xml .= '  <url>' . "\n";
     $xml .= '    <loc>' . esc_url($home) . '</loc>' . "\n";
     $xml .= '    <changefreq>weekly</changefreq>' . "\n";
     $xml .= '    <priority>1.0</priority>' . "\n";
     $xml .= '  </url>' . "\n";
 
-    // All published pages
-    foreach ($pages as $page) {
+    // Only include pages that match our whitelist
+    foreach ($include_slugs as $slug) {
+        $page = get_page_by_path($slug);
+        if (!$page || $page->post_status !== 'publish')
+            continue;
+
         $url = get_permalink($page->ID);
-        if ($url === $home)
-            continue; // skip duplicate homepage
+
+        // Remove /index.php/ if it's still in the URL
+        $url = str_replace('/index.php/', '/', $url);
 
         $modified = get_the_modified_date('Y-m-d', $page->ID);
         $priority = '0.8';
 
-        // Boost important pages
-        if (in_array($page->post_name, array('products', 'products-services', 'about', 'contact', 'contact-us'))) {
+        if (in_array($slug, array('products', 'products-services', 'about', 'contact-us'))) {
             $priority = '0.9';
         }
 
