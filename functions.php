@@ -4,6 +4,11 @@ if (!defined('ABSPATH'))
     exit;
 
 // =============================================
+// DISABLE GUTENBERG — USE CLASSIC EDITOR
+// =============================================
+add_filter('use_block_editor_for_post', '__return_false');
+
+// =============================================
 // 1. THEME SETUP
 // =============================================
 function eden_infosol_theme_setup()
@@ -51,6 +56,7 @@ function eden_infosol_enqueue_assets()
         // Pass AJAX URL to JavaScript (needed for contact form)
         wp_localize_script('eden-script', 'edenAjax', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('eden_assessment_nonce'),
         ));
     }
 }
@@ -542,3 +548,307 @@ function eden_resource_hints()
     echo '<link rel="preload" as="style" href="' . esc_url(get_stylesheet_uri()) . '">' . "\n";
 }
 add_action('wp_head', 'eden_resource_hints', 0);
+
+
+// =============================================
+// 13. CREATE ASSESSMENT DATABASE TABLE
+// =============================================
+function eden_create_assessment_table()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_assessments';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id              BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        client_name     VARCHAR(255) NOT NULL DEFAULT '',
+        contact_email   VARCHAR(255) NOT NULL DEFAULT '',
+        contact_phone   VARCHAR(50)  NOT NULL DEFAULT '',
+        form_data       LONGTEXT     NOT NULL,
+        risk_score      INT(11)      NOT NULL DEFAULT 0,
+        risk_level      VARCHAR(20)  NOT NULL DEFAULT 'Unknown',
+        submission_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        status          VARCHAR(20)  NOT NULL DEFAULT 'new',
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+add_action('after_switch_theme', 'eden_create_assessment_table');
+
+function eden_maybe_create_assessment_table()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_assessments';
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") !== $table_name) {
+        eden_create_assessment_table();
+    }
+}
+add_action('init', 'eden_maybe_create_assessment_table');
+
+
+// =============================================
+// 14. RISK SCORING ENGINE
+// =============================================
+function eden_calculate_risk_score($data)
+{
+    $score = 0;
+    $max_score = 0;
+
+    // Endpoint Security features (11 items) — each "no" = 8 risk points
+    $security_features = array(
+        'sec_antivirus',
+        'sec_endpoint_firewall',
+        'sec_app_control',
+        'sec_device_control',
+        'sec_vuln_assessment',
+        'sec_patch_mgmt',
+        'sec_siem',
+        'sec_encryption',
+        'sec_edr_xdr',
+        'sec_software_control',
+        'sec_inventory_tracking',
+    );
+    foreach ($security_features as $feature) {
+        $max_score += 8;
+        $val = isset($data[$feature]) ? strtolower(trim($data[$feature])) : 'no';
+        if ($val !== 'yes') {
+            $score += 8;
+        }
+    }
+
+    // Backup & DR checks
+    $max_score += 6;
+    if (empty($data['server_backup_solution']))
+        $score += 6;
+
+    $max_score += 6;
+    if (empty($data['endpoint_backup_solution']))
+        $score += 6;
+
+    $max_score += 8;
+    $mfa = isset($data['mfa_sso']) ? strtolower(trim($data['mfa_sso'])) : 'no';
+    if ($mfa !== 'yes')
+        $score += 8;
+
+    // SSL certificate
+    $max_score += 6;
+    $ssl = isset($data['ssl_certificate']) ? strtolower(trim($data['ssl_certificate'])) : 'no';
+    if ($ssl !== 'yes')
+        $score += 6;
+
+    // Dedicated server room
+    $max_score += 4;
+    $server_room = isset($data['dedicated_server_room']) ? strtolower(trim($data['dedicated_server_room'])) : 'no';
+    if ($server_room !== 'yes')
+        $score += 4;
+
+    // Fire alarm
+    $max_score += 4;
+    $fire_alarm = isset($data['fire_alarm_system']) ? strtolower(trim($data['fire_alarm_system'])) : 'no';
+    if ($fire_alarm !== 'yes')
+        $score += 4;
+
+    // Inhouse IT support
+    $max_score += 4;
+    $it_support = isset($data['inhouse_it_support']) ? strtolower(trim($data['inhouse_it_support'])) : 'no';
+    if ($it_support !== 'yes')
+        $score += 4;
+
+    // Firewall
+    $max_score += 6;
+    if (empty($data['firewalls']))
+        $score += 6;
+
+    // Email security
+    $max_score += 5;
+    if (empty($data['email_security_solution']))
+        $score += 5;
+
+    // Determine risk level
+    $percentage = ($max_score > 0) ? round(($score / $max_score) * 100) : 0;
+
+    if ($percentage <= 25) {
+        $level = 'Low';
+    } elseif ($percentage <= 50) {
+        $level = 'Medium';
+    } elseif ($percentage <= 75) {
+        $level = 'High';
+    } else {
+        $level = 'Critical';
+    }
+
+    return array(
+        'score' => $score,
+        'max_score' => $max_score,
+        'percentage' => $percentage,
+        'level' => $level,
+    );
+}
+
+
+// =============================================
+// 15. HANDLE ASSESSMENT FORM (AJAX)
+// =============================================
+function eden_handle_assessment_form()
+{
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'eden_assessment_nonce')) {
+        wp_send_json_error(array('message' => 'Security check failed.'));
+    }
+
+    // Sanitize all form data
+    $raw_data = isset($_POST['formData']) ? $_POST['formData'] : array();
+    $sanitized = array();
+    foreach ($raw_data as $key => $value) {
+        if (is_array($value)) {
+            $sanitized[sanitize_key($key)] = array_map('sanitize_text_field', $value);
+        } else {
+            $sanitized[sanitize_key($key)] = sanitize_text_field($value);
+        }
+    }
+
+    // Extract key fields
+    $client_name = isset($sanitized['client_name']) ? $sanitized['client_name'] : '';
+    $contact_email = isset($sanitized['contact_email']) ? $sanitized['contact_email'] : '';
+    $contact_phone = isset($sanitized['contact_phone']) ? $sanitized['contact_phone'] : '';
+
+    // Validate required
+    if (empty($client_name) || empty($contact_email)) {
+        wp_send_json_error(array('message' => 'Client Name and Email are required.'));
+    }
+
+    // Calculate risk score
+    $risk = eden_calculate_risk_score($sanitized);
+
+    // Save to database
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_assessments';
+    $inserted = $wpdb->insert($table_name, array(
+        'client_name' => $client_name,
+        'contact_email' => $contact_email,
+        'contact_phone' => $contact_phone,
+        'form_data' => wp_json_encode($sanitized),
+        'risk_score' => $risk['score'],
+        'risk_level' => $risk['level'],
+        'submission_date' => current_time('mysql'),
+        'status' => 'new',
+    ));
+
+    if ($inserted === false) {
+        wp_send_json_error(array('message' => 'Database error. Please try again.'));
+    }
+
+    $assessment_id = $wpdb->insert_id;
+
+    // Email to Eden team
+    $to = 'abhishek.sheth@edeninfosol.com';
+    $subject = "New IT Assessment: {$client_name} — Risk: {$risk['level']}";
+
+    $body = "<h2>New IT Infrastructure & Security Assessment</h2>";
+    $body .= "<p><strong>Client:</strong> {$client_name}</p>";
+    $body .= "<p><strong>Email:</strong> {$contact_email}</p>";
+    $body .= "<p><strong>Phone:</strong> {$contact_phone}</p>";
+    $body .= "<hr>";
+    $body .= "<p><strong>Risk Score:</strong> {$risk['score']} / {$risk['max_score']} ({$risk['percentage']}%)</p>";
+    $body .= "<p><strong>Risk Level:</strong> {$risk['level']}</p>";
+    $body .= "<hr>";
+    $body .= "<p><strong>Employees:</strong> " . ($sanitized['num_employees'] ?? 'N/A') . "</p>";
+    $body .= "<p><strong>Locations:</strong> " . ($sanitized['num_locations'] ?? 'N/A') . "</p>";
+    $body .= "<p><strong>Assessment ID:</strong> #{$assessment_id}</p>";
+    $body .= "<p>View full details in the WordPress admin panel.</p>";
+
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+    wp_mail($to, $subject, $body, $headers);
+
+    // Confirmation email to client
+    if (!empty($contact_email) && is_email($contact_email)) {
+        $client_subject = "Your IT Assessment Report — Eden Infosol";
+        $client_body = "<h2>Thank you, {$client_name}!</h2>";
+        $client_body .= "<p>We have received your IT Infrastructure & Security Assessment.</p>";
+        $client_body .= "<p><strong>Your Risk Level:</strong> {$risk['level']}</p>";
+        $client_body .= "<p><strong>Risk Score:</strong> {$risk['percentage']}%</p>";
+        $client_body .= "<p>Our team will review your assessment and reach out within 24 hours with a detailed report and recommendations.</p>";
+        $client_body .= "<br><p>Best regards,<br>Eden Infosol Team<br><a href='https://edeninfosol.com'>edeninfosol.com</a></p>";
+
+        wp_mail($contact_email, $client_subject, $client_body, $headers);
+    }
+
+    // Return success
+    wp_send_json_success(array(
+        'message' => 'Assessment submitted successfully!',
+        'id' => $assessment_id,
+        'risk_score' => $risk['score'],
+        'max_score' => $risk['max_score'],
+        'percentage' => $risk['percentage'],
+        'risk_level' => $risk['level'],
+    ));
+}
+add_action('wp_ajax_eden_submit_assessment', 'eden_handle_assessment_form');
+add_action('wp_ajax_nopriv_eden_submit_assessment', 'eden_handle_assessment_form');
+
+
+// =============================================
+// 16. ADMIN PAGE — VIEW ASSESSMENTS
+// =============================================
+function eden_assessments_admin_menu()
+{
+    add_menu_page(
+        'IT Assessments',
+        'IT Assessments',
+        'manage_options',
+        'eden-assessments',
+        'eden_assessments_admin_page',
+        'dashicons-shield',
+        31
+    );
+}
+add_action('admin_menu', 'eden_assessments_admin_menu');
+
+function eden_assessments_admin_page()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_assessments';
+    $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY submission_date DESC LIMIT 100");
+
+    echo '<div class="wrap">';
+    echo '<h1><span class="dashicons dashicons-shield" style="margin-right:8px;"></span>IT Infrastructure & Security Assessments</h1>';
+    echo '<p>All client assessments submitted via the website.</p>';
+    echo '<table class="widefat fixed striped">';
+    echo '<thead><tr>
+            <th style="width:50px;">ID</th>
+            <th>Client</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th style="width:100px;">Risk Level</th>
+            <th style="width:70px;">Score</th>
+            <th style="width:160px;">Date</th>
+            <th style="width:80px;">Status</th>
+          </tr></thead><tbody>';
+
+    if ($results) {
+        foreach ($results as $row) {
+            $colors = array(
+                'Low' => '#2e7d32',
+                'Medium' => '#f57f17',
+                'High' => '#e65100',
+                'Critical' => '#c62828',
+            );
+            $color = isset($colors[$row->risk_level]) ? $colors[$row->risk_level] : '#666';
+            echo "<tr>
+                    <td>#{$row->id}</td>
+                    <td><strong>{$row->client_name}</strong></td>
+                    <td><a href='mailto:{$row->contact_email}'>{$row->contact_email}</a></td>
+                    <td>{$row->contact_phone}</td>
+                    <td><span style='color:{$color};font-weight:bold;'>{$row->risk_level}</span></td>
+                    <td>{$row->risk_score}</td>
+                    <td>" . date('M j, Y g:i A', strtotime($row->submission_date)) . "</td>
+                    <td>{$row->status}</td>
+                  </tr>";
+        }
+    } else {
+        echo '<tr><td colspan="8">No assessments submitted yet.</td></tr>';
+    }
+    echo '</tbody></table></div>';
+}

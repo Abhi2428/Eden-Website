@@ -392,4 +392,494 @@ document.addEventListener('DOMContentLoaded', function () {
     // Note: enqueue PHP/WordPress scripts should be added in the theme's PHP files,
     // not in this JavaScript file.
 
+
+
+    // =============================================
+    // ASSESSMENT FORM — MULTI-STEP WIZARD
+    // =============================================
+    var assessForm = document.getElementById('edenAssessmentForm');
+    if (assessForm) {
+        var TOTAL_STEPS = 7;
+        var currentStep = 1;
+        var STORAGE_KEY = 'eden_assessment_draft';
+
+        var formSection = document.getElementById('assessment-form-section');
+        var resultsSection = document.getElementById('resultsSection');
+        var progressFill = document.getElementById('progressFill');
+        var saveStatus = document.getElementById('saveStatus');
+
+        // ─── Show Step ───
+        function showStep(step) {
+            document.querySelectorAll('.form-step').forEach(function (el) {
+                el.classList.remove('active');
+            });
+            var target = document.querySelector('.form-step[data-step="' + step + '"]');
+            if (target) target.classList.add('active');
+
+            updateProgressBar(step);
+
+            // Smooth scroll to form top
+            if (formSection) {
+                window.scrollTo({ top: formSection.offsetTop - 30, behavior: 'smooth' });
+            }
+            currentStep = step;
+        }
+
+        function updateProgressBar(step) {
+            var percent = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
+            if (progressFill) progressFill.style.width = percent + '%';
+
+            document.querySelectorAll('.progress-step').forEach(function (el) {
+                var s = parseInt(el.getAttribute('data-step'));
+                el.classList.remove('active', 'completed');
+                if (s < step) el.classList.add('completed');
+                if (s === step) el.classList.add('active');
+            });
+        }
+
+        // ─── Next / Previous Buttons ───
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-next')) {
+                if (validateStep(currentStep)) {
+                    showStep(currentStep + 1);
+                    autoSave();
+                }
+            }
+            if (e.target.closest('.btn-prev')) {
+                showStep(currentStep - 1);
+            }
+        });
+
+        // ─── Validation ───
+        function validateStep(step) {
+            var isValid = true;
+            var stepEl = document.querySelector('.form-step[data-step="' + step + '"]');
+            if (!stepEl) return true;
+
+            // Clear previous errors
+            stepEl.querySelectorAll('.field-error').forEach(function (el) { el.textContent = ''; });
+            stepEl.querySelectorAll('.form-group').forEach(function (el) { el.classList.remove('has-error'); });
+
+            if (step === 1) {
+                var nameVal = (document.getElementById('client_name').value || '').trim();
+                if (!nameVal) {
+                    setFieldError('client_name', 'Organization name is required.');
+                    isValid = false;
+                }
+                var emailVal = (document.getElementById('contact_email').value || '').trim();
+                if (!emailVal) {
+                    setFieldError('contact_email', 'Email is required.');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+                    setFieldError('contact_email', 'Please enter a valid email address.');
+                    isValid = false;
+                }
+                var phoneVal = (document.getElementById('contact_phone').value || '').trim();
+                if (!phoneVal) {
+                    setFieldError('contact_phone', 'Phone number is required.');
+                    isValid = false;
+                }
+            }
+
+            if (step === 7) {
+                var consent = document.getElementById('consent_checkbox');
+                if (consent && !consent.checked) {
+                    var consentErr = document.getElementById('consent-error');
+                    if (consentErr) consentErr.textContent = 'You must agree to the privacy policy.';
+                    isValid = false;
+                }
+            }
+
+            // Scroll to first error
+            if (!isValid) {
+                var firstErr = stepEl.querySelector('.has-error');
+                if (firstErr) {
+                    window.scrollTo({ top: firstErr.offsetTop - 100, behavior: 'smooth' });
+                }
+            }
+            return isValid;
+        }
+
+        function setFieldError(id, message) {
+            var input = document.getElementById(id);
+            if (!input) return;
+            var group = input.closest('.form-group');
+            if (group) {
+                group.classList.add('has-error');
+                var errEl = group.querySelector('.field-error');
+                if (errEl) errEl.textContent = message;
+            }
+        }
+
+        // Clear errors on input
+        assessForm.addEventListener('input', function (e) {
+            var group = e.target.closest('.form-group');
+            if (group) {
+                group.classList.remove('has-error');
+                var errEl = group.querySelector('.field-error');
+                if (errEl) errEl.textContent = '';
+            }
+        });
+        assessForm.addEventListener('change', function (e) {
+            if (e.target.id === 'consent_checkbox') {
+                var ce = document.getElementById('consent-error');
+                if (ce) ce.textContent = '';
+            }
+            var group = e.target.closest('.form-group');
+            if (group) {
+                group.classList.remove('has-error');
+                var errEl = group.querySelector('.field-error');
+                if (errEl) errEl.textContent = '';
+            }
+        });
+
+        // ─── Conditional Logic ───
+        document.querySelectorAll('input[name="inhouse_it_support"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var field = document.getElementById('it_staff_field');
+                if (!field) return;
+                if (this.value === 'yes') {
+                    field.style.display = '';
+                } else {
+                    field.style.display = 'none';
+                    var inp = document.getElementById('num_it_support_staff');
+                    if (inp) inp.value = '';
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="dedicated_server_room"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var field = document.getElementById('rack_details_field');
+                if (!field) return;
+                if (this.value === 'yes') {
+                    field.style.display = '';
+                } else {
+                    field.style.display = 'none';
+                    ['num_racks', 'num_patch_panels', 'num_pdus_per_rack'].forEach(function (id) {
+                        var inp = document.getElementById(id);
+                        if (inp) inp.value = '';
+                    });
+                }
+            });
+        });
+
+        // ─── Collect Form Data ───
+        function collectFormData() {
+            var data = {};
+            // Text, number, email, tel, url, textarea, select
+            assessForm.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], textarea, select').forEach(function (el) {
+                if (el.name) data[el.name] = el.value;
+            });
+            // Radio buttons
+            assessForm.querySelectorAll('input[type="radio"]:checked').forEach(function (el) {
+                if (el.name) data[el.name] = el.value;
+            });
+            // Checkboxes (arrays)
+            var cbGroups = {};
+            assessForm.querySelectorAll('input[type="checkbox"]:checked').forEach(function (el) {
+                if (!el.name) return;
+                if (el.name.indexOf('[]') > -1) {
+                    var cleanName = el.name.replace('[]', '');
+                    if (!cbGroups[cleanName]) cbGroups[cleanName] = [];
+                    cbGroups[cleanName].push(el.value);
+                } else {
+                    data[el.name] = el.value;
+                }
+            });
+            for (var key in cbGroups) {
+                data[key] = cbGroups[key];
+            }
+            return data;
+        }
+
+        // ─── Form Submission (fetch API) ───
+        assessForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!validateStep(currentStep)) return;
+
+            var formData = collectFormData();
+            var submitBtn = document.getElementById('submitBtn');
+            var btnText = submitBtn.querySelector('.btn-text');
+            var btnLoading = submitBtn.querySelector('.btn-loading');
+
+            // Show loading
+            if (btnText) btnText.style.display = 'none';
+            if (btnLoading) btnLoading.style.display = 'inline-flex';
+            submitBtn.disabled = true;
+
+            // Build URLSearchParams for fetch
+            var params = new URLSearchParams();
+            params.append('action', 'eden_submit_assessment');
+            params.append('nonce', edenAjax.nonce);
+
+            // Flatten formData into params
+            for (var key in formData) {
+                if (Array.isArray(formData[key])) {
+                    formData[key].forEach(function (val) {
+                        params.append('formData[' + key + '][]', val);
+                    });
+                } else {
+                    params.append('formData[' + key + ']', formData[key]);
+                }
+            }
+
+            fetch(edenAjax.ajaxurl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (response) {
+                    // Reset button
+                    if (btnText) btnText.style.display = '';
+                    if (btnLoading) btnLoading.style.display = 'none';
+                    submitBtn.disabled = false;
+
+                    if (response.success) {
+                        clearSavedDraft();
+                        // Hide form section
+                        formSection.style.display = 'none';
+                        // Also hide trust bar and hero to focus on results
+                        var hero = document.querySelector('.eden-assess-hero');
+                        var trust = document.querySelector('.eden-trust-bar');
+                        if (hero) hero.style.display = 'none';
+                        if (trust) trust.style.display = 'none';
+
+                        displayResults(response.data);
+                        resultsSection.style.display = '';
+                        window.scrollTo({ top: resultsSection.offsetTop - 30, behavior: 'smooth' });
+                    } else {
+                        alert('Error: ' + (response.data && response.data.message ? response.data.message : 'An unexpected error occurred.'));
+                    }
+                })
+                .catch(function (err) {
+                    if (btnText) btnText.style.display = '';
+                    if (btnLoading) btnLoading.style.display = 'none';
+                    submitBtn.disabled = false;
+                    alert('Network error. Please check your connection and try again.');
+                });
+        });
+
+        // ─── Display Results & Score Animation ───
+        function displayResults(data) {
+            var percentage = data.percentage || 0;
+            var riskLevel = data.risk_level || 'Unknown';
+
+            setText('resultClientName', document.getElementById('client_name').value);
+            setText('riskScoreValue', data.risk_score);
+            setText('maxScoreValue', data.max_score);
+            setText('assessmentIdValue', '#' + data.id);
+
+            // Risk level badge
+            var badge = document.getElementById('scoreLevelBadge');
+            if (badge) {
+                badge.className = 'score-level level-' + riskLevel.toLowerCase();
+            }
+            setText('scoreLevelText', riskLevel + ' Risk');
+
+            // Score ring
+            var ringFill = document.getElementById('scoreRingFill');
+            if (ringFill) {
+                var circumference = 2 * Math.PI * 52;
+                var color = getRiskColor(riskLevel);
+                ringFill.style.stroke = color;
+                ringFill.style.strokeDasharray = circumference;
+                ringFill.style.strokeDashoffset = circumference;
+
+                setTimeout(function () {
+                    var offset = circumference - (percentage / 100) * circumference;
+                    ringFill.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
+                    ringFill.style.strokeDashoffset = offset;
+                }, 200);
+            }
+
+            // Counter animation
+            animateCounter('scorePercentage', 0, percentage, 1500);
+
+            // Risk message
+            var msgEl = document.getElementById('resultsMessage');
+            if (msgEl) msgEl.innerHTML = getRiskMessage(riskLevel);
+        }
+
+        function setText(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        function getRiskColor(level) {
+            var colors = { low: '#00c853', medium: '#ffc107', high: '#ff9800', critical: '#ff5252' };
+            return colors[level.toLowerCase()] || '#90a4ae';
+        }
+
+        function getRiskMessage(level) {
+            var msgs = {
+                low: '<div class="risk-msg risk-low"><h3><i class="fa-solid fa-shield-check"></i> Your IT infrastructure is in good shape!</h3><p>You have strong security measures in place. Our team can help you optimize further and ensure continuous protection.</p></div>',
+                medium: '<div class="risk-msg risk-medium"><h3><i class="fa-solid fa-triangle-exclamation"></i> Some areas need attention</h3><p>There are moderate gaps in your IT security posture. We recommend a consultation to address key vulnerabilities.</p></div>',
+                high: '<div class="risk-msg risk-high"><h3><i class="fa-solid fa-exclamation-circle"></i> Significant risks detected</h3><p>Your infrastructure has notable security gaps. Immediate action is recommended to protect your business.</p></div>',
+                critical: '<div class="risk-msg risk-critical"><h3><i class="fa-solid fa-skull-crossbones"></i> Critical vulnerabilities found!</h3><p>Your IT environment is highly exposed. Urgent remediation is required. Book an emergency consultation immediately.</p></div>'
+            };
+            return msgs[level.toLowerCase()] || '';
+        }
+
+        function animateCounter(id, start, end, duration) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var range = end - start;
+            var startTime = null;
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var progress = Math.min((timestamp - startTime) / duration, 1);
+                el.textContent = Math.floor(progress * range + start);
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // ─── Save & Continue (localStorage) ───
+        function autoSave() {
+            try {
+                var formData = collectFormData();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    step: currentStep,
+                    data: formData,
+                    timestamp: new Date().toISOString()
+                }));
+            } catch (e) { }
+        }
+
+        var saveBtn = document.getElementById('saveProgressBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function () {
+                autoSave();
+                if (saveStatus) {
+                    saveStatus.textContent = 'Progress saved!';
+                    saveStatus.style.display = 'inline';
+                    setTimeout(function () { saveStatus.style.display = 'none'; }, 2500);
+                }
+            });
+        }
+
+        function tryRestoreDraft() {
+            try {
+                var saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return;
+                var obj = JSON.parse(saved);
+                if (!obj || !obj.data) return;
+
+                var savedDate = new Date(obj.timestamp);
+                var diffDays = (new Date() - savedDate) / (1000 * 60 * 60 * 24);
+                if (diffDays > 7) { clearSavedDraft(); return; }
+
+                if (!confirm('We found a saved draft from ' + savedDate.toLocaleDateString() + '. Continue where you left off?')) {
+                    clearSavedDraft(); return;
+                }
+
+                var data = obj.data;
+                for (var key in data) {
+                    var val = data[key];
+
+                    // Arrays (checkboxes)
+                    if (Array.isArray(val)) {
+                        val.forEach(function (v) {
+                            var cb = assessForm.querySelector('input[name="' + key + '[]"][value="' + v + '"]');
+                            if (cb) cb.checked = true;
+                        });
+                        continue;
+                    }
+                    // Radios
+                    var radio = assessForm.querySelector('input[type="radio"][name="' + key + '"][value="' + val + '"]');
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                        continue;
+                    }
+                    // Text / select / textarea
+                    var field = assessForm.querySelector('[name="' + key + '"]');
+                    if (field && field.type !== 'radio' && field.type !== 'checkbox') {
+                        field.value = val;
+                    }
+                }
+
+                if (obj.step && obj.step > 1 && obj.step <= TOTAL_STEPS) {
+                    showStep(obj.step);
+                }
+            } catch (e) { }
+        }
+
+        function clearSavedDraft() {
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) { }
+        }
+
+        // ─── Download Summary ───
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#downloadReportBtn')) {
+                var clientName = (document.getElementById('resultClientName') || {}).textContent || 'Client';
+                var riskLevel = (document.getElementById('scoreLevelText') || {}).textContent || 'N/A';
+                var riskScore = (document.getElementById('riskScoreValue') || {}).textContent || '0';
+                var maxScore = (document.getElementById('maxScoreValue') || {}).textContent || '0';
+                var pct = (document.getElementById('scorePercentage') || {}).textContent || '0';
+                var assessId = (document.getElementById('assessmentIdValue') || {}).textContent || '#—';
+
+                var s = '';
+                s += '═══════════════════════════════════════════════\n';
+                s += '  IT INFRASTRUCTURE & SECURITY ASSESSMENT\n';
+                s += '  Eden Infosol Pvt. Ltd.\n';
+                s += '═══════════════════════════════════════════════\n\n';
+                s += '  Client:         ' + clientName + '\n';
+                s += '  Assessment ID:  ' + assessId + '\n';
+                s += '  Date:           ' + new Date().toLocaleDateString() + '\n\n';
+                s += '───────────────────────────────────────────────\n';
+                s += '  RISK SUMMARY\n';
+                s += '───────────────────────────────────────────────\n\n';
+                s += '  Risk Level:     ' + riskLevel + '\n';
+                s += '  Risk Score:     ' + riskScore + ' / ' + maxScore + '\n';
+                s += '  Risk %:         ' + pct + '%\n\n';
+                s += '───────────────────────────────────────────────\n';
+                s += '  NEXT STEPS\n';
+                s += '───────────────────────────────────────────────\n\n';
+                s += '  1. Our team will review your detailed assessment.\n';
+                s += '  2. A comprehensive report will be sent to your email\n';
+                s += '     within 24 hours.\n';
+                s += '  3. Book a free consultation to discuss findings\n';
+                s += '     and recommendations.\n\n';
+                s += '───────────────────────────────────────────────\n';
+                s += '  CONTACT\n';
+                s += '───────────────────────────────────────────────\n\n';
+                s += '  Email: management@edeninfosol.com\n';
+                s += '  Web:   https://edeninfosol.com\n\n';
+                s += '═══════════════════════════════════════════════\n';
+                s += '  © ' + new Date().getFullYear() + ' Eden Infosol. All rights reserved.\n';
+                s += '═══════════════════════════════════════════════\n';
+
+                var blob = new Blob([s], { type: 'text/plain' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'IT_Assessment_' + clientName.replace(/\s+/g, '_') + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // ─── Keyboard: Enter → Next Step ───
+        document.addEventListener('keydown', function (e) {
+            if (!assessForm.contains(e.target)) return;
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit') {
+                e.preventDefault();
+                if (currentStep < TOTAL_STEPS) {
+                    var nextBtn = document.querySelector('.form-step.active .btn-next');
+                    if (nextBtn) nextBtn.click();
+                }
+            }
+        });
+
+        // ─── Init ───
+        showStep(1);
+        tryRestoreDraft();
+
+    } // end if (assessForm)
+
 });
