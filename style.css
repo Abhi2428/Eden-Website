@@ -260,12 +260,20 @@ img {
     background: var(--navy);
 }
 
-.navbar.scrolled {
-    background: rgba(18, 44, 85, 0.97);
-    padding: 12px 0;
-    backdrop-filter: blur(20px);
+
+navbar.scrolled {
+    background: var(--navy);
+    /* Same solid navy — no transparency */
+    padding: 16px 0;
+    /* Same padding as default — no shrinking */
+    backdrop-filter: none;
+    /* Remove blur effect */
+    -webkit-backdrop-filter: none;
+    /* Safari fallback */
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+    /* Keep subtle shadow for depth */
 }
+
 
 .nav-logo {
     font-size: 1.3rem;
@@ -4117,4 +4125,378 @@ ol {
         box-shadow: none;
         border: 1px solid #ccc;
     }
+}
+
+/* ===== SECTION TOGGLE CARDS ===== */
+.section-toggles-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.section-toggle-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font);
+    user-select: none;
+}
+
+.section-toggle-card:hover {
+    border-color: var(--accent);
+    background: rgba(211, 154, 6, 0.03);
+}
+
+.section-toggle-card input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.section-toggle-card i {
+    color: var(--accent);
+    font-size: 0.9rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.section-toggle-card:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(211, 154, 6, 0.06);
+    box-shadow: 0 0 0 1px rgba(211, 154, 6, 0.2);
+}
+
+/* Toggle Section Animation */
+.toggle-section {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+    margin-top: 0;
+}
+
+.toggle-section.open {
+    max-height: 3000px;
+    opacity: 1;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gray-200);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 3 — GROUPED SECTION CARDS                 */
+/* ═══════════════════════════════════════════════ */
+
+/* Each logical section gets a card wrapper */
+.section-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 28px 28px 20px;
+    margin-bottom: 24px;
+    position: relative;
+    transition: border-color 0.3s ease;
+}
+
+.section-card:hover {
+    border-color: rgba(211, 154, 6, 0.3);
+}
+
+/* Card header with icon + title */
+.section-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.section-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.section-card-icon i {
+    font-size: 1rem;
+    color: var(--accent-light);
+}
+
+.section-card-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+.section-card-header p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+}
+
+/* Y/N inline row — label + radios on same line */
+.yn-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    transition: background 0.2s ease;
+}
+
+.yn-row:hover {
+    background: rgba(211, 154, 6, 0.03);
+}
+
+.yn-row label.yn-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.yn-row label.yn-label i {
+    color: var(--accent);
+    font-size: 0.85rem;
+    width: 18px;
+    text-align: center;
+}
+
+.yn-row .radio-group {
+    margin: 0;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Compact inline field pair — label on left, input on right */
+.inline-field-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+/* Subsection divider (lighter than main divider) */
+.subsection-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 18px 0 10px;
+    padding-left: 2px;
+}
+
+/* Conditional field inside a card — subtle indent */
+.section-card .conditional-field {
+    margin-top: 10px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent);
+}
+
+/* Checkbox row — for things like DLP checkboxes inside conditional */
+.section-card .checkbox-group {
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* Security table inside card — remove outer border since card has one */
+.section-card .security-table-wrapper {
+    border: none;
+    margin: 0 -28px -20px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+}
+
+.section-card .security-table-wrapper .security-table {
+    margin: 0;
+}
+
+/* IT Operations tools grid — slightly tighter */
+.section-card .form-grid {
+    margin-bottom: 4px;
+}
+
+/* Override divider inside step 3 to remove it (cards replace dividers) */
+.form-step[data-step="3"]>.form-divider {
+    display: none;
+}
+
+/* Responsive toggle grid */
+@media (max-width: 1024px) {
+    .section-toggles-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .section-toggles-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .section-toggle-card {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-toggles-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Location Tabs ─── */
+.location-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.loc-tab {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.3s;
+}
+
+.loc-tab:hover {
+    border-color: #d39a06;
+    color: #d39a06;
+}
+
+.loc-tab.active {
+    background: #122c55;
+    border-color: #122c55;
+    color: #fff;
+}
+
+/* ─── Dynamic Rows ─── */
+.dynamic-row {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #fafbfc;
+}
+
+.dynamic-row-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: #122c55;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Sub Headings ─── */
+.sub-heading {
+    font-size: 14px;
+    font-weight: 700;
+    color: #d39a06;
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Conditional Fields ─── */
+.conditional-field {
+    transition: all 0.3s ease;
+}
+
+/* ─── Location Tabs ─── */
+.location-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.loc-tab {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.3s;
+}
+
+.loc-tab:hover {
+    border-color: #d39a06;
+    color: #d39a06;
+}
+
+.loc-tab.active {
+    background: #122c55;
+    border-color: #122c55;
+    color: #fff;
+}
+
+/* ─── Dynamic Rows ─── */
+.dynamic-row {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #fafbfc;
+}
+
+.dynamic-row-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: #122c55;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Sub Headings ─── */
+.sub-heading {
+    font-size: 14px;
+    font-weight: 700;
+    color: #d39a06;
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Conditional Fields ─── */
+.conditional-field {
+    transition: all 0.3s ease;
 }

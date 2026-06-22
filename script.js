@@ -393,42 +393,261 @@ document.addEventListener('DOMContentLoaded', function () {
     // not in this JavaScript file.
 
 
-
     // =============================================
-    // ASSESSMENT FORM — MULTI-STEP WIZARD
+    // ASSESSMENT FORM — COMPLETE REWRITE
     // =============================================
     var assessForm = document.getElementById('edenAssessmentForm');
     if (assessForm) {
-        var TOTAL_STEPS = 7;
+
+        var TOTAL_STEPS = 3;
         var currentStep = 1;
         var STORAGE_KEY = 'eden_assessment_draft';
-
         var formSection = document.getElementById('assessment-form-section');
         var resultsSection = document.getElementById('resultsSection');
         var progressFill = document.getElementById('progressFill');
         var saveStatus = document.getElementById('saveStatus');
+        var locTemplate = document.getElementById('eden-loc-template');
+        var locTabsBar = document.getElementById('locationTabs');
+        var locContents = document.getElementById('locationContents');
+        var currentLocCount = 0;
 
-        // ─── Show Step ───
+        // ═══════════════════════════════════════════
+        // 1. LOCATION TAB GENERATOR
+        // ═══════════════════════════════════════════
+        function buildLocationTabs(count) {
+            count = Math.max(1, Math.min(20, parseInt(count) || 1));
+            if (count === currentLocCount) return;
+
+            for (var i = currentLocCount; i < count; i++) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'loc-tab' + (i === 0 ? ' active' : '');
+                btn.setAttribute('data-loc', i);
+                btn.textContent = 'Location ' + (i + 1);
+                locTabsBar.appendChild(btn);
+
+                var html = locTemplate.innerHTML
+                    .replace(/\{\{IDX\}\}/g, i)
+                    .replace(/\{\{NUM\}\}/g, (i + 1));
+                var wrap = document.createElement('div');
+                wrap.innerHTML = html;
+                var panel = wrap.firstElementChild;
+                panel.style.display = (i === 0) ? '' : 'none';
+                locContents.appendChild(panel);
+
+                bindPanelHandlers(panel);
+            }
+
+            var allTabs = locTabsBar.querySelectorAll('.loc-tab');
+            var allPanels = locContents.querySelectorAll('.location-panel');
+            for (var j = 0; j < allTabs.length; j++) {
+                if (j < count) {
+                    allTabs[j].style.display = '';
+                } else {
+                    allTabs[j].style.display = 'none';
+                    allPanels[j].style.display = 'none';
+                }
+            }
+
+            var activeIdx = parseInt((locTabsBar.querySelector('.loc-tab.active') || {}).getAttribute('data-loc') || '0');
+            if (activeIdx >= count) {
+                switchLocTab(0);
+            }
+
+            currentLocCount = Math.max(currentLocCount, count);
+        }
+
+        function switchLocTab(idx) {
+            locTabsBar.querySelectorAll('.loc-tab').forEach(function (t) { t.classList.remove('active'); });
+            locContents.querySelectorAll('.location-panel').forEach(function (p) { p.style.display = 'none'; });
+            var tab = locTabsBar.querySelector('.loc-tab[data-loc="' + idx + '"]');
+            var panel = locContents.querySelector('.location-panel[data-loc="' + idx + '"]');
+            if (tab) tab.classList.add('active');
+            if (panel) panel.style.display = '';
+        }
+
+        locTabsBar.addEventListener('click', function (e) {
+            var tab = e.target.closest('.loc-tab');
+            if (tab) switchLocTab(parseInt(tab.getAttribute('data-loc')));
+        });
+
+        var numLocInput = document.getElementById('num_locations');
+        if (numLocInput) {
+            numLocInput.addEventListener('input', function () {
+                var val = parseInt(this.value) || 0;
+                if (val > 0 && val <= 20) buildLocationTabs(val);
+            });
+        }
+
+        // ═══════════════════════════════════════════
+        // 2. BIND HANDLERS FOR DYNAMIC PANELS
+        // ═══════════════════════════════════════════
+        function bindPanelHandlers(panel) {
+            panel.querySelectorAll('.section-toggle').forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    var sec = document.getElementById(this.getAttribute('data-target'));
+                    if (!sec) return;
+                    if (this.checked) {
+                        sec.classList.add('open');
+                    } else {
+                        sec.classList.remove('open');
+                        clearFieldsInside(sec);
+                    }
+                });
+            });
+
+            panel.querySelectorAll('.eden-yn-trigger').forEach(function (el) {
+                el.addEventListener('change', function () { handleYNTrigger(this); });
+            });
+
+            panel.querySelectorAll('.eden-qty-trigger').forEach(function (el) {
+                el.addEventListener('input', function () { generateDynamicRows(this); });
+            });
+        }
+
+        // ═══════════════════════════════════════════
+        // 3. DYNAMIC QUANTITY ROW GENERATOR
+        // ═══════════════════════════════════════════
+        function generateDynamicRows(input) {
+            var count = Math.min(50, Math.max(0, parseInt(input.value) || 0));
+            var containerId = input.getAttribute('data-container');
+            var tpl = input.getAttribute('data-tpl');
+            var prefix = input.getAttribute('data-prefix');
+            var container = document.getElementById(containerId);
+            if (!container) return;
+
+            var saved = {};
+            container.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (f.name) saved[f.name] = f.value;
+            });
+
+            container.innerHTML = '';
+            if (count === 0) return;
+
+            for (var i = 1; i <= count; i++) {
+                var row = document.createElement('div');
+                row.className = 'dynamic-row';
+                var p = prefix + '_' + i;
+                var label = getRowLabel(tpl, i);
+
+                if (tpl === 'internet') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-3">' +
+                        '<div class="form-group"><label>ISP Name</label><input type="text" name="' + p + '_isp" placeholder="e.g. Airtel"></div>' +
+                        '<div class="form-group"><label>Bandwidth</label><input type="text" name="' + p + '_bw" placeholder="e.g. 100 Mbps"></div>' +
+                        '<div class="form-group"><label>Type</label><select name="' + p + '_type"><option value="">Select</option><option value="Broadband">Broadband</option><option value="ILL">ILL</option><option value="MPLS">MPLS</option></select></div>' +
+                        '</div>';
+                } else if (tpl === 'p2p') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-3">' +
+                        '<div class="form-group"><label>Point A</label><input type="text" name="' + p + '_point_a" placeholder="e.g. Mumbai"></div>' +
+                        '<div class="form-group"><label>Point B</label><input type="text" name="' + p + '_point_b" placeholder="e.g. Delhi"></div>' +
+                        '<div class="form-group"><label>Bandwidth</label><input type="text" name="' + p + '_bw" placeholder="e.g. 10 Mbps"></div>' +
+                        '</div>';
+                } else if (tpl === 'leased') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-3">' +
+                        '<div class="form-group"><label>Bandwidth</label><input type="text" name="' + p + '_bw" placeholder="e.g. 10 Mbps"></div>' +
+                        '<div class="form-group"><label>Details</label><input type="text" name="' + p + '_details" placeholder="Point A to B"></div>' +
+                        '<div class="form-group"><label>SP Router</label><select name="' + p + '_sp_router"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></div>' +
+                        '</div>';
+                } else if (tpl === 'rack') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-3">' +
+                        '<div class="form-group"><label>Dimensions</label><input type="text" name="' + p + '_dim" placeholder="600x500 / 600x1000 / 800x1000"></div>' +
+                        '<div class="form-group"><label>Patch Panels (24-port)</label><input type="number" name="' + p + '_pp24" min="0" placeholder="0"></div>' +
+                        '<div class="form-group"><label>Patch Panels (48-port)</label><input type="number" name="' + p + '_pp48" min="0" placeholder="0"></div>' +
+                        '</div>';
+                } else {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-2">' +
+                        '<div class="form-group"><label>Make</label><input type="text" name="' + p + '_make" placeholder="Make"></div>' +
+                        '<div class="form-group"><label>Model</label><input type="text" name="' + p + '_model" placeholder="Model"></div>' +
+                        '</div>';
+                }
+
+                container.appendChild(row);
+            }
+
+            container.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (f.name && saved[f.name] !== undefined) f.value = saved[f.name];
+            });
+        }
+
+        function getRowLabel(tpl, i) {
+            var labels = {
+                internet: 'Connection ', p2p: 'P2P Line ',
+                leased: 'Leased Line ', rack: 'Rack ',
+                makemodel: 'Unit '
+            };
+            return (labels[tpl] || 'Item ') + i;
+        }
+
+        // ═══════════════════════════════════════════
+        // 4. Y/N CONDITIONAL TRIGGER
+        // ═══════════════════════════════════════════
+        function handleYNTrigger(el) {
+            var targetId = el.getAttribute('data-target');
+            var target = document.getElementById(targetId);
+            if (!target) return;
+
+            var show = false;
+            if (el.type === 'checkbox') {
+                show = el.checked;
+            } else if (el.type === 'radio') {
+                show = (el.value === 'yes' && el.checked);
+            }
+
+            target.style.display = show ? '' : 'none';
+            if (!show) clearFieldsInside(target);
+        }
+
+        function clearFieldsInside(container) {
+            container.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], textarea').forEach(function (f) { f.value = ''; });
+            container.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(function (f) { f.checked = false; });
+            container.querySelectorAll('select').forEach(function (f) { f.selectedIndex = 0; });
+            container.querySelectorAll('.dynamic-rows').forEach(function (f) { f.innerHTML = ''; });
+        }
+
+        // Global Y/N triggers (Step 1 and Step 3)
+        document.querySelectorAll('.eden-yn-trigger').forEach(function (el) {
+            el.addEventListener('change', function () { handleYNTrigger(this); });
+        });
+
+        // Global section toggles (Step 3)
+        document.querySelectorAll('.section-toggle').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                var sec = document.getElementById(this.getAttribute('data-target'));
+                if (!sec) return;
+                if (this.checked) { sec.classList.add('open'); }
+                else { sec.classList.remove('open'); clearFieldsInside(sec); }
+            });
+        });
+
+        // ═══════════════════════════════════════════
+        // 5. MULTI-STEP WIZARD
+        // ═══════════════════════════════════════════
         function showStep(step) {
             document.querySelectorAll('.form-step').forEach(function (el) {
                 el.classList.remove('active');
             });
             var target = document.querySelector('.form-step[data-step="' + step + '"]');
             if (target) target.classList.add('active');
-
             updateProgressBar(step);
-
-            // Smooth scroll to form top
             if (formSection) {
                 window.scrollTo({ top: formSection.offsetTop - 30, behavior: 'smooth' });
             }
             currentStep = step;
+
+            if (step === 2) {
+                var val = parseInt(numLocInput.value) || 1;
+                buildLocationTabs(val);
+            }
         }
 
         function updateProgressBar(step) {
             var percent = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
             if (progressFill) progressFill.style.width = percent + '%';
-
             document.querySelectorAll('.progress-step').forEach(function (el) {
                 var s = parseInt(el.getAttribute('data-step'));
                 el.classList.remove('active', 'completed');
@@ -437,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // ─── Next / Previous Buttons ───
+        // Next / Previous (delegated)
         document.addEventListener('click', function (e) {
             if (e.target.closest('.btn-next')) {
                 if (validateStep(currentStep)) {
@@ -450,52 +669,44 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // ─── Validation ───
+        // ═══════════════════════════════════════════
+        // 6. VALIDATION
+        // ═══════════════════════════════════════════
         function validateStep(step) {
             var isValid = true;
             var stepEl = document.querySelector('.form-step[data-step="' + step + '"]');
             if (!stepEl) return true;
 
-            // Clear previous errors
             stepEl.querySelectorAll('.field-error').forEach(function (el) { el.textContent = ''; });
             stepEl.querySelectorAll('.form-group').forEach(function (el) { el.classList.remove('has-error'); });
 
             if (step === 1) {
-                var nameVal = (document.getElementById('client_name').value || '').trim();
-                if (!nameVal) {
-                    setFieldError('client_name', 'Organization name is required.');
-                    isValid = false;
-                }
-                var emailVal = (document.getElementById('contact_email').value || '').trim();
-                if (!emailVal) {
-                    setFieldError('contact_email', 'Email is required.');
-                    isValid = false;
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
-                    setFieldError('contact_email', 'Please enter a valid email address.');
-                    isValid = false;
-                }
-                var phoneVal = (document.getElementById('contact_phone').value || '').trim();
-                if (!phoneVal) {
-                    setFieldError('contact_phone', 'Phone number is required.');
-                    isValid = false;
-                }
+                var name = (document.getElementById('client_name').value || '').trim();
+                if (!name) { setFieldError('client_name', 'Organization name is required.'); isValid = false; }
+
+                var email = (document.getElementById('contact_email').value || '').trim();
+                if (!email) { setFieldError('contact_email', 'Email is required.'); isValid = false; }
+                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError('contact_email', 'Enter a valid email.'); isValid = false; }
+
+                var phone = (document.getElementById('contact_phone').value || '').trim();
+                if (!phone) { setFieldError('contact_phone', 'Phone is required.'); isValid = false; }
+
+                var locs = (document.getElementById('num_locations').value || '').trim();
+                if (!locs || parseInt(locs) < 1) { setFieldError('num_locations', 'At least 1 location required.'); isValid = false; }
             }
 
-            if (step === 7) {
+            if (step === 3) {
                 var consent = document.getElementById('consent_checkbox');
                 if (consent && !consent.checked) {
-                    var consentErr = document.getElementById('consent-error');
-                    if (consentErr) consentErr.textContent = 'You must agree to the privacy policy.';
+                    var ce = document.getElementById('consent-error');
+                    if (ce) ce.textContent = 'You must agree to the privacy policy.';
                     isValid = false;
                 }
             }
 
-            // Scroll to first error
             if (!isValid) {
                 var firstErr = stepEl.querySelector('.has-error');
-                if (firstErr) {
-                    window.scrollTo({ top: firstErr.offsetTop - 100, behavior: 'smooth' });
-                }
+                if (firstErr) window.scrollTo({ top: firstErr.offsetTop - 100, behavior: 'smooth' });
             }
             return isValid;
         }
@@ -506,94 +717,53 @@ document.addEventListener('DOMContentLoaded', function () {
             var group = input.closest('.form-group');
             if (group) {
                 group.classList.add('has-error');
-                var errEl = group.querySelector('.field-error');
-                if (errEl) errEl.textContent = message;
+                var err = group.querySelector('.field-error');
+                if (err) err.textContent = message;
             }
         }
 
-        // Clear errors on input
         assessForm.addEventListener('input', function (e) {
-            var group = e.target.closest('.form-group');
-            if (group) {
-                group.classList.remove('has-error');
-                var errEl = group.querySelector('.field-error');
-                if (errEl) errEl.textContent = '';
-            }
+            var g = e.target.closest('.form-group');
+            if (g) { g.classList.remove('has-error'); var err = g.querySelector('.field-error'); if (err) err.textContent = ''; }
         });
         assessForm.addEventListener('change', function (e) {
             if (e.target.id === 'consent_checkbox') {
-                var ce = document.getElementById('consent-error');
-                if (ce) ce.textContent = '';
+                var ce = document.getElementById('consent-error'); if (ce) ce.textContent = '';
             }
-            var group = e.target.closest('.form-group');
-            if (group) {
-                group.classList.remove('has-error');
-                var errEl = group.querySelector('.field-error');
-                if (errEl) errEl.textContent = '';
-            }
+            var g = e.target.closest('.form-group');
+            if (g) { g.classList.remove('has-error'); var err = g.querySelector('.field-error'); if (err) err.textContent = ''; }
         });
 
-        // ─── Conditional Logic ───
-        document.querySelectorAll('input[name="inhouse_it_support"]').forEach(function (radio) {
-            radio.addEventListener('change', function () {
-                var field = document.getElementById('it_staff_field');
-                if (!field) return;
-                if (this.value === 'yes') {
-                    field.style.display = '';
-                } else {
-                    field.style.display = 'none';
-                    var inp = document.getElementById('num_it_support_staff');
-                    if (inp) inp.value = '';
-                }
-            });
-        });
-
-        document.querySelectorAll('input[name="dedicated_server_room"]').forEach(function (radio) {
-            radio.addEventListener('change', function () {
-                var field = document.getElementById('rack_details_field');
-                if (!field) return;
-                if (this.value === 'yes') {
-                    field.style.display = '';
-                } else {
-                    field.style.display = 'none';
-                    ['num_racks', 'num_patch_panels', 'num_pdus_per_rack'].forEach(function (id) {
-                        var inp = document.getElementById(id);
-                        if (inp) inp.value = '';
-                    });
-                }
-            });
-        });
-
-        // ─── Collect Form Data ───
+        // ═══════════════════════════════════════════
+        // 7. COLLECT FORM DATA
+        // ═══════════════════════════════════════════
         function collectFormData() {
             var data = {};
-            // Text, number, email, tel, url, textarea, select
             assessForm.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], textarea, select').forEach(function (el) {
                 if (el.name) data[el.name] = el.value;
             });
-            // Radio buttons
             assessForm.querySelectorAll('input[type="radio"]:checked').forEach(function (el) {
                 if (el.name) data[el.name] = el.value;
             });
-            // Checkboxes (arrays)
             var cbGroups = {};
             assessForm.querySelectorAll('input[type="checkbox"]:checked').forEach(function (el) {
                 if (!el.name) return;
                 if (el.name.indexOf('[]') > -1) {
-                    var cleanName = el.name.replace('[]', '');
-                    if (!cbGroups[cleanName]) cbGroups[cleanName] = [];
-                    cbGroups[cleanName].push(el.value);
+                    var clean = el.name.replace('[]', '');
+                    if (!cbGroups[clean]) cbGroups[clean] = [];
+                    cbGroups[clean].push(el.value);
                 } else {
                     data[el.name] = el.value;
                 }
             });
-            for (var key in cbGroups) {
-                data[key] = cbGroups[key];
-            }
+            for (var key in cbGroups) { data[key] = cbGroups[key]; }
+            data._loc_count = parseInt(numLocInput.value) || 1;
             return data;
         }
 
-        // ─── Form Submission (fetch API) ───
+        // ═══════════════════════════════════════════
+        // 8. FORM SUBMISSION (AJAX)
+        // ═══════════════════════════════════════════
         assessForm.addEventListener('submit', function (e) {
             e.preventDefault();
             if (!validateStep(currentStep)) return;
@@ -603,17 +773,14 @@ document.addEventListener('DOMContentLoaded', function () {
             var btnText = submitBtn.querySelector('.btn-text');
             var btnLoading = submitBtn.querySelector('.btn-loading');
 
-            // Show loading
             if (btnText) btnText.style.display = 'none';
             if (btnLoading) btnLoading.style.display = 'inline-flex';
             submitBtn.disabled = true;
 
-            // Build URLSearchParams for fetch
             var params = new URLSearchParams();
             params.append('action', 'eden_submit_assessment');
             params.append('nonce', edenAjax.nonce);
 
-            // Flatten formData into params
             for (var key in formData) {
                 if (Array.isArray(formData[key])) {
                     formData[key].forEach(function (val) {
@@ -629,23 +796,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: params.toString()
             })
-                .then(function (response) { return response.json(); })
+                .then(function (r) { return r.json(); })
                 .then(function (response) {
-                    // Reset button
                     if (btnText) btnText.style.display = '';
                     if (btnLoading) btnLoading.style.display = 'none';
                     submitBtn.disabled = false;
 
                     if (response.success) {
                         clearSavedDraft();
-                        // Hide form section
                         formSection.style.display = 'none';
-                        // Also hide trust bar and hero to focus on results
                         var hero = document.querySelector('.eden-assess-hero');
                         var trust = document.querySelector('.eden-trust-bar');
                         if (hero) hero.style.display = 'none';
                         if (trust) trust.style.display = 'none';
-
                         displayResults(response.data);
                         resultsSection.style.display = '';
                         window.scrollTo({ top: resultsSection.offsetTop - 30, behavior: 'smooth' });
@@ -653,7 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         alert('Error: ' + (response.data && response.data.message ? response.data.message : 'An unexpected error occurred.'));
                     }
                 })
-                .catch(function (err) {
+                .catch(function () {
                     if (btnText) btnText.style.display = '';
                     if (btnLoading) btnLoading.style.display = 'none';
                     submitBtn.disabled = false;
@@ -661,7 +824,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
 
-        // ─── Display Results & Score Animation ───
+        // ═══════════════════════════════════════════
+        // 9. DISPLAY RESULTS & SCORE ANIMATION
+        // ═══════════════════════════════════════════
         function displayResults(data) {
             var percentage = data.percentage || 0;
             var riskLevel = data.risk_level || 'Unknown';
@@ -671,55 +836,41 @@ document.addEventListener('DOMContentLoaded', function () {
             setText('maxScoreValue', data.max_score);
             setText('assessmentIdValue', '#' + data.id);
 
-            // Risk level badge
             var badge = document.getElementById('scoreLevelBadge');
-            if (badge) {
-                badge.className = 'score-level level-' + riskLevel.toLowerCase();
-            }
+            if (badge) badge.className = 'score-level level-' + riskLevel.toLowerCase();
             setText('scoreLevelText', riskLevel + ' Risk');
 
-            // Score ring
             var ringFill = document.getElementById('scoreRingFill');
             if (ringFill) {
                 var circumference = 2 * Math.PI * 52;
-                var color = getRiskColor(riskLevel);
-                ringFill.style.stroke = color;
+                ringFill.style.stroke = getRiskColor(riskLevel);
                 ringFill.style.strokeDasharray = circumference;
                 ringFill.style.strokeDashoffset = circumference;
-
                 setTimeout(function () {
-                    var offset = circumference - (percentage / 100) * circumference;
                     ringFill.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
-                    ringFill.style.strokeDashoffset = offset;
+                    ringFill.style.strokeDashoffset = circumference - (percentage / 100) * circumference;
                 }, 200);
             }
-
-            // Counter animation
             animateCounter('scorePercentage', 0, percentage, 1500);
-
-            // Risk message
             var msgEl = document.getElementById('resultsMessage');
             if (msgEl) msgEl.innerHTML = getRiskMessage(riskLevel);
         }
 
-        function setText(id, val) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = val;
-        }
+        function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
 
         function getRiskColor(level) {
-            var colors = { low: '#00c853', medium: '#ffc107', high: '#ff9800', critical: '#ff5252' };
-            return colors[level.toLowerCase()] || '#90a4ae';
+            var c = { low: '#00c853', medium: '#ffc107', high: '#ff9800', critical: '#ff5252' };
+            return c[level.toLowerCase()] || '#90a4ae';
         }
 
         function getRiskMessage(level) {
-            var msgs = {
-                low: '<div class="risk-msg risk-low"><h3><i class="fa-solid fa-shield-check"></i> Your IT infrastructure is in good shape!</h3><p>You have strong security measures in place. Our team can help you optimize further and ensure continuous protection.</p></div>',
-                medium: '<div class="risk-msg risk-medium"><h3><i class="fa-solid fa-triangle-exclamation"></i> Some areas need attention</h3><p>There are moderate gaps in your IT security posture. We recommend a consultation to address key vulnerabilities.</p></div>',
-                high: '<div class="risk-msg risk-high"><h3><i class="fa-solid fa-exclamation-circle"></i> Significant risks detected</h3><p>Your infrastructure has notable security gaps. Immediate action is recommended to protect your business.</p></div>',
-                critical: '<div class="risk-msg risk-critical"><h3><i class="fa-solid fa-skull-crossbones"></i> Critical vulnerabilities found!</h3><p>Your IT environment is highly exposed. Urgent remediation is required. Book an emergency consultation immediately.</p></div>'
+            var m = {
+                low: '<div class="risk-msg risk-low"><h3><i class="fa-solid fa-shield-check"></i> Your IT infrastructure is in good shape!</h3><p>Strong security measures in place. Our team can help optimize further.</p></div>',
+                medium: '<div class="risk-msg risk-medium"><h3><i class="fa-solid fa-triangle-exclamation"></i> Some areas need attention</h3><p>Moderate gaps in your IT security posture. We recommend a consultation.</p></div>',
+                high: '<div class="risk-msg risk-high"><h3><i class="fa-solid fa-exclamation-circle"></i> Significant risks detected</h3><p>Notable security gaps found. Immediate action is recommended.</p></div>',
+                critical: '<div class="risk-msg risk-critical"><h3><i class="fa-solid fa-skull-crossbones"></i> Critical vulnerabilities found!</h3><p>Your IT environment is highly exposed. Urgent remediation required.</p></div>'
             };
-            return msgs[level.toLowerCase()] || '';
+            return m[level.toLowerCase()] || '';
         }
 
         function animateCounter(id, start, end, duration) {
@@ -727,21 +878,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!el) return;
             var range = end - start;
             var startTime = null;
-            function step(timestamp) {
-                if (!startTime) startTime = timestamp;
-                var progress = Math.min((timestamp - startTime) / duration, 1);
+            function step(ts) {
+                if (!startTime) startTime = ts;
+                var progress = Math.min((ts - startTime) / duration, 1);
                 el.textContent = Math.floor(progress * range + start);
                 if (progress < 1) requestAnimationFrame(step);
             }
             requestAnimationFrame(step);
         }
 
-        // ─── Save & Continue (localStorage) ───
+        // ═══════════════════════════════════════════
+        // 10. SAVE & RESTORE DRAFT
+        // ═══════════════════════════════════════════
         function autoSave() {
             try {
                 var formData = collectFormData();
                 localStorage.setItem(STORAGE_KEY, JSON.stringify({
                     step: currentStep,
+                    locCount: parseInt(numLocInput.value) || 1,
                     data: formData,
                     timestamp: new Date().toISOString()
                 }));
@@ -775,11 +929,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     clearSavedDraft(); return;
                 }
 
+                if (obj.locCount && numLocInput) {
+                    numLocInput.value = obj.locCount;
+                    buildLocationTabs(obj.locCount);
+                }
+
                 var data = obj.data;
                 for (var key in data) {
+                    if (key.charAt(0) === '_') continue;
                     var val = data[key];
 
-                    // Arrays (checkboxes)
                     if (Array.isArray(val)) {
                         val.forEach(function (v) {
                             var cb = assessForm.querySelector('input[name="' + key + '[]"][value="' + v + '"]');
@@ -787,19 +946,35 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                         continue;
                     }
-                    // Radios
+
                     var radio = assessForm.querySelector('input[type="radio"][name="' + key + '"][value="' + val + '"]');
                     if (radio) {
                         radio.checked = true;
                         radio.dispatchEvent(new Event('change'));
                         continue;
                     }
-                    // Text / select / textarea
+
                     var field = assessForm.querySelector('[name="' + key + '"]');
                     if (field && field.type !== 'radio' && field.type !== 'checkbox') {
                         field.value = val;
+                        if (field.classList.contains('eden-qty-trigger')) {
+                            field.dispatchEvent(new Event('input'));
+                        }
                     }
                 }
+
+                // Restore dynamic row values after they're built
+                setTimeout(function () {
+                    for (var key in data) {
+                        if (key.charAt(0) === '_') continue;
+                        var val = data[key];
+                        if (Array.isArray(val)) continue;
+                        var field = assessForm.querySelector('[name="' + key + '"]');
+                        if (field && field.type !== 'radio' && field.type !== 'checkbox') {
+                            field.value = val;
+                        }
+                    }
+                }, 100);
 
                 if (obj.step && obj.step > 1 && obj.step <= TOTAL_STEPS) {
                     showStep(obj.step);
@@ -811,52 +986,49 @@ document.addEventListener('DOMContentLoaded', function () {
             try { localStorage.removeItem(STORAGE_KEY); } catch (e) { }
         }
 
-        // ─── Download Summary ───
+        // ═══════════════════════════════════════════
+        // 11. DOWNLOAD SUMMARY
+        // ═══════════════════════════════════════════
         document.addEventListener('click', function (e) {
             if (e.target.closest('#downloadReportBtn')) {
-                var clientName = (document.getElementById('resultClientName') || {}).textContent || 'Client';
-                var riskLevel = (document.getElementById('scoreLevelText') || {}).textContent || 'N/A';
-                var riskScore = (document.getElementById('riskScoreValue') || {}).textContent || '0';
-                var maxScore = (document.getElementById('maxScoreValue') || {}).textContent || '0';
-                var pct = (document.getElementById('scorePercentage') || {}).textContent || '0';
-                var assessId = (document.getElementById('assessmentIdValue') || {}).textContent || '#—';
+                var cn = (document.getElementById('resultClientName') || {}).textContent || 'Client';
+                var rl = (document.getElementById('scoreLevelText') || {}).textContent || 'N/A';
+                var rs = (document.getElementById('riskScoreValue') || {}).textContent || '0';
+                var ms = (document.getElementById('maxScoreValue') || {}).textContent || '0';
+                var pc = (document.getElementById('scorePercentage') || {}).textContent || '0';
+                var ai = (document.getElementById('assessmentIdValue') || {}).textContent || '#—';
 
                 var s = '';
-                s += '═══════════════════════════════════════════════\n';
+                s += '===============================================\n';
                 s += '  IT INFRASTRUCTURE & SECURITY ASSESSMENT\n';
                 s += '  Eden Infosol Pvt. Ltd.\n';
-                s += '═══════════════════════════════════════════════\n\n';
-                s += '  Client:         ' + clientName + '\n';
-                s += '  Assessment ID:  ' + assessId + '\n';
+                s += '===============================================\n\n';
+                s += '  Client:         ' + cn + '\n';
+                s += '  Assessment ID:  ' + ai + '\n';
                 s += '  Date:           ' + new Date().toLocaleDateString() + '\n\n';
-                s += '───────────────────────────────────────────────\n';
+                s += '-----------------------------------------------\n';
                 s += '  RISK SUMMARY\n';
-                s += '───────────────────────────────────────────────\n\n';
-                s += '  Risk Level:     ' + riskLevel + '\n';
-                s += '  Risk Score:     ' + riskScore + ' / ' + maxScore + '\n';
-                s += '  Risk %:         ' + pct + '%\n\n';
-                s += '───────────────────────────────────────────────\n';
+                s += '-----------------------------------------------\n\n';
+                s += '  Risk Level:     ' + rl + '\n';
+                s += '  Risk Score:     ' + rs + ' / ' + ms + '\n';
+                s += '  Risk %:         ' + pc + '%\n\n';
+                s += '-----------------------------------------------\n';
                 s += '  NEXT STEPS\n';
-                s += '───────────────────────────────────────────────\n\n';
-                s += '  1. Our team will review your detailed assessment.\n';
-                s += '  2. A comprehensive report will be sent to your email\n';
-                s += '     within 24 hours.\n';
-                s += '  3. Book a free consultation to discuss findings\n';
-                s += '     and recommendations.\n\n';
-                s += '───────────────────────────────────────────────\n';
-                s += '  CONTACT\n';
-                s += '───────────────────────────────────────────────\n\n';
+                s += '-----------------------------------------------\n\n';
+                s += '  1. Our team will review your assessment.\n';
+                s += '  2. A report will be sent within 24 hours.\n';
+                s += '  3. Book a free consultation to discuss findings.\n\n';
                 s += '  Email: management@edeninfosol.com\n';
                 s += '  Web:   https://edeninfosol.com\n\n';
-                s += '═══════════════════════════════════════════════\n';
-                s += '  © ' + new Date().getFullYear() + ' Eden Infosol. All rights reserved.\n';
-                s += '═══════════════════════════════════════════════\n';
+                s += '===============================================\n';
+                s += '  (c) ' + new Date().getFullYear() + ' Eden Infosol. All rights reserved.\n';
+                s += '===============================================\n';
 
                 var blob = new Blob([s], { type: 'text/plain' });
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = 'IT_Assessment_' + clientName.replace(/\s+/g, '_') + '.txt';
+                a.download = 'IT_Assessment_' + cn.replace(/\s+/g, '_') + '.txt';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -864,7 +1036,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // ─── Keyboard: Enter → Next Step ───
+        // ═══════════════════════════════════════════
+        // 12. KEYBOARD: Enter → Next Step
+        // ═══════════════════════════════════════════
         document.addEventListener('keydown', function (e) {
             if (!assessForm.contains(e.target)) return;
             if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit') {
@@ -875,6 +1049,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
+
 
         // ─── Init ───
         showStep(1);

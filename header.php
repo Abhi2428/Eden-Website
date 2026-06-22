@@ -37,7 +37,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
             </div>
 
             <a href="<?php echo esc_url($home_url); ?>" class="nav-brand">
-                <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/logos/logo.png'); ?>"
+                <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/logos/EdenInfosol.png'); ?>"
                     alt="Eden Infosol" class="nav-brand-logo">
                 <div class="nav-brand-text">
                     <span class="nav-logo">EDEN <span>INFOSOL</span></span>

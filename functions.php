@@ -789,8 +789,9 @@ add_action('wp_ajax_eden_submit_assessment', 'eden_handle_assessment_form');
 add_action('wp_ajax_nopriv_eden_submit_assessment', 'eden_handle_assessment_form');
 
 
+
 // =============================================
-// 16. ADMIN PAGE — VIEW ASSESSMENTS
+// 16. ADMIN PAGE — VIEW ASSESSMENTS (ENHANCED)
 // =============================================
 function eden_assessments_admin_menu()
 {
@@ -810,45 +811,368 @@ function eden_assessments_admin_page()
 {
     global $wpdb;
     $table_name = $wpdb->prefix . 'eden_assessments';
+
+    // ─── DELETE ───
+    if (isset($_GET['delete_id'])) {
+        $wpdb->delete($table_name, array('id' => intval($_GET['delete_id'])), array('%d'));
+        echo '<div class="notice notice-success"><p>Assessment deleted.</p></div>';
+    }
+
+    // ─── DETAIL VIEW ───
+    if (isset($_GET['view_id'])) {
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['view_id'])));
+        if (!$row) {
+            echo '<div class="wrap"><h1>Assessment Not Found</h1><p><a href="' . admin_url('admin.php?page=eden-assessments') . '">&larr; Back to list</a></p></div>';
+            return;
+        }
+        $data = json_decode($row->form_data, true);
+        if (!$data)
+            $data = array();
+
+        // Risk colors
+        $risk_colors = array('Low' => '#2e7d32', 'Medium' => '#f57f17', 'High' => '#e65100', 'Critical' => '#c62828');
+        $risk_bg = array('Low' => '#e8f5e9', 'Medium' => '#fff8e1', 'High' => '#fff3e0', 'Critical' => '#ffebee');
+        $rc = isset($risk_colors[$row->risk_level]) ? $risk_colors[$row->risk_level] : '#666';
+        $rb = isset($risk_bg[$row->risk_level]) ? $risk_bg[$row->risk_level] : '#f5f5f5';
+
+        // Helper to get value
+        function eden_val($data, $key, $fallback = '—')
+        {
+            if (!isset($data[$key]))
+                return $fallback;
+            if (is_array($data[$key]))
+                return implode(', ', $data[$key]);
+            $v = trim($data[$key]);
+            return ($v !== '') ? esc_html($v) : $fallback;
+        }
+
+        // Helper to render a section
+        function eden_render_section($title, $icon, $fields, $data)
+        {
+            $has_data = false;
+            foreach ($fields as $key => $label) {
+                $val = isset($data[$key]) ? (is_array($data[$key]) ? implode(', ', $data[$key]) : trim($data[$key])) : '';
+                if ($val !== '') {
+                    $has_data = true;
+                    break;
+                }
+            }
+            if (!$has_data)
+                return;
+
+            echo '<div style="margin-bottom:24px;">';
+            echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+            echo '<span class="dashicons ' . $icon . '" style="margin-right:8px;color:#d39a06;"></span>' . $title . '</h3>';
+            echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+            $i = 0;
+            foreach ($fields as $key => $label) {
+                $val = eden_val($data, $key);
+                $bg = ($i % 2 === 0) ? '#fff' : '#fafafa';
+                echo '<tr style="background:' . $bg . ';">';
+                echo '<td style="width:35%;padding:10px 14px;font-weight:600;color:#333;border-bottom:1px solid #eee;">' . $label . '</td>';
+                echo '<td style="padding:10px 14px;color:#555;border-bottom:1px solid #eee;">' . $val . '</td>';
+                echo '</tr>';
+                $i++;
+            }
+            echo '</table></div>';
+        }
+
+        // ─── Render Detail Page ───
+        echo '<div class="wrap">';
+
+        // Top bar
+        echo '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">';
+        echo '<div>';
+        echo '<h1 style="margin:0;"><span class="dashicons dashicons-shield" style="margin-right:8px;"></span>Assessment #' . $row->id . '</h1>';
+        echo '<p style="color:#666;margin:4px 0 0;">Submitted ' . date('F j, Y \a\t g:i A', strtotime($row->submission_date)) . '</p>';
+        echo '</div>';
+        echo '<div style="display:flex;gap:8px;">';
+        echo '<a href="' . admin_url('admin.php?page=eden-assessments') . '" class="button">&larr; Back to List</a>';
+        echo '<button onclick="window.print();" class="button button-primary"><span class="dashicons dashicons-printer" style="margin-top:3px;margin-right:4px;"></span> Print</button>';
+        echo '</div></div>';
+
+        // Risk Summary Cards
+        echo '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:28px;">';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;text-align:center;">';
+        echo '<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Client</div>';
+        echo '<div style="font-size:18px;font-weight:700;color:#122c55;">' . esc_html($row->client_name) . '</div>';
+        echo '</div>';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;text-align:center;">';
+        echo '<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Risk Level</div>';
+        echo '<div style="display:inline-block;background:' . $rb . ';color:' . $rc . ';padding:6px 18px;border-radius:50px;font-weight:700;font-size:15px;">' . esc_html($row->risk_level) . '</div>';
+        echo '</div>';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;text-align:center;">';
+        echo '<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Risk Score</div>';
+        echo '<div style="font-size:18px;font-weight:700;color:#122c55;">' . esc_html($row->risk_score) . '</div>';
+        echo '</div>';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;text-align:center;">';
+        echo '<div style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Contact</div>';
+        echo '<div style="font-size:14px;"><a href="mailto:' . esc_attr($row->contact_email) . '">' . esc_html($row->contact_email) . '</a></div>';
+        echo '<div style="font-size:13px;color:#666;margin-top:4px;">' . esc_html($row->contact_phone) . '</div>';
+        echo '</div>';
+
+        echo '</div>';
+
+        // ─── All Sections ───
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:28px;">';
+
+        eden_render_section('Organization Details', 'dashicons-building', array(
+            'client_name' => 'Organization Name',
+            'contact_email' => 'Contact Email',
+            'contact_phone' => 'Contact Phone',
+            'designation' => 'Designation',
+            'num_employees' => 'No. of Employees',
+            'total_employees' => 'Total Employees (All Locations)',
+            'num_locations' => 'No. of Locations',
+            'num_departments' => 'No. of Departments',
+            'num_vendors' => 'No. of Vendors',
+            'work_days' => 'Work Days per Week',
+            'departments_list' => 'Departments',
+            'vendors_list' => 'Vendors',
+            'total_working_hours' => 'Working Hours/Day',
+            'inhouse_it_support' => 'Inhouse IT Support',
+            'num_it_support_staff' => 'IT Support Staff',
+        ), $data);
+
+        eden_render_section('Primary Location', 'dashicons-location', array(
+            'location_name' => 'Location Name',
+            'num_users_location' => 'Users in Location',
+            'work_setup' => 'Work Setup',
+            'dedicated_server_room' => 'Dedicated Server Room',
+            'num_racks' => 'No. of Racks',
+            'num_patch_panels' => 'No. of Patch Panels',
+            'num_pdus_per_rack' => 'PDUs per Rack',
+        ), $data);
+
+        eden_render_section('Internet & ISP', 'dashicons-admin-site-alt3', array(
+            'isp_names' => 'ISP Name(s)',
+            'isp1_bandwidth' => 'ISP 1 Bandwidth',
+            'isp2_bandwidth' => 'ISP 2 Bandwidth',
+            'isp_router_provided' => 'ISP Router Provided',
+        ), $data);
+
+        eden_render_section('Leased Lines', 'dashicons-admin-links', array(
+            'num_leased_lines' => 'No. of Leased Lines',
+            'leased_bandwidth' => 'Bandwidth',
+            'additional_leased_details' => 'Additional Details',
+            'sp_router_provided' => 'SP Router Provided',
+        ), $data);
+
+        eden_render_section('Network Devices', 'dashicons-networking', array(
+            'num_routers' => 'Owned Routers',
+            'firewalls' => 'Firewalls',
+            'num_vpn_users' => 'VPN Users',
+        ), $data);
+
+        eden_render_section('Switching Infrastructure', 'dashicons-randomize', array(
+            'num_switches' => 'No. of Switches',
+            'core_switches_l3' => 'Core Switches (L3)',
+            'access_switches_l2' => 'Distribution / Access (L2/L1)',
+        ), $data);
+
+        eden_render_section('Server Infrastructure', 'dashicons-cloud-saved', array(
+            'physical_servers_non_virt' => 'Physical Servers (Non-Virt)',
+            'physical_servers_virt' => 'Physical Servers (Virt)',
+            'hypervisor' => 'Hypervisor Platform',
+            'total_vms' => 'Virtual Machines',
+        ), $data);
+
+        eden_render_section('Storage', 'dashicons-database', array(
+            'num_nas' => 'NAS Devices',
+            'nas_capacity' => 'NAS Capacity',
+            'num_san' => 'SAN Devices',
+            'san_capacity' => 'SAN Capacity',
+        ), $data);
+
+        eden_render_section('End-User Devices', 'dashicons-laptop', array(
+            'company_desktops' => 'Company Desktops',
+            'company_laptops' => 'Company Laptops',
+            'company_tablets' => 'Company Tablets',
+            'byod_desktops' => 'BYOD Desktops',
+            'byod_laptops' => 'BYOD Laptops',
+            'byod_mobile' => 'BYOD Mobile/Tablets',
+            'thin_clients' => 'Thin Clients',
+            'vdi_instances' => 'VDI Instances',
+        ), $data);
+
+        eden_render_section('Peripherals', 'dashicons-printer', array(
+            'printers' => 'Printers',
+            'scanners' => 'Scanners',
+            'mfp_devices' => 'MFP Devices',
+            'biometric_devices' => 'Biometric Devices',
+        ), $data);
+
+        eden_render_section('CCTV & Security Systems', 'dashicons-visibility', array(
+            'ip_cameras' => 'IP Cameras',
+            'analog_cameras' => 'Analog Cameras',
+            'dvr_nvr_units' => 'DVR / NVR Units',
+            'cctv_storage_capacity' => 'CCTV Storage Capacity',
+        ), $data);
+
+        eden_render_section('Telephony', 'dashicons-phone', array(
+            'phone_line_types' => 'Phone Line Types',
+            'epabx_type' => 'EPABX Type',
+            'phone_types' => 'Phone Types',
+        ), $data);
+
+        eden_render_section('Power & Safety', 'dashicons-superhero', array(
+            'fire_extinguishers' => 'Fire Extinguishers',
+            'fire_alarm_system' => 'Fire Alarm System',
+            'ups_type' => 'UPS Type',
+            'ups_mode' => 'UPS Mode',
+            'ups_capacity' => 'UPS Capacity',
+            'ups_backup_time' => 'UPS Backup Time',
+        ), $data);
+
+        eden_render_section('Video Conferencing', 'dashicons-video-alt2', array(
+            'vc_devices' => 'VC Devices (Hardware)',
+        ), $data);
+
+        eden_render_section('Identity & Directory', 'dashicons-admin-network', array(
+            'ad_workgroup' => 'AD / Workgroup',
+            'ad_type' => 'Type of AD',
+        ), $data);
+
+        // ─── Endpoint Security — Special Table ───
+        $sec_features = array(
+            'sec_antivirus' => 'Antivirus / Anti-malware',
+            'sec_endpoint_firewall' => 'Endpoint Firewall',
+            'sec_app_control' => 'Application Control',
+            'sec_device_control' => 'Device Control',
+            'sec_vuln_assessment' => 'Vulnerability Assessment',
+            'sec_patch_mgmt' => 'Patch Management',
+            'sec_siem' => 'SIEM Integration',
+            'sec_encryption' => 'Encryption',
+            'sec_edr_xdr' => 'EDR / XDR',
+            'sec_software_control' => 'Software Control',
+            'sec_inventory_tracking' => 'Inventory Tracking',
+        );
+
+        echo '<div style="margin-bottom:24px;">';
+        echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+        echo '<span class="dashicons dashicons-shield" style="margin-right:8px;color:#d39a06;"></span>Endpoint Security</h3>';
+        echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+        echo '<thead><tr style="background:#122c55;color:#fff;">';
+        echo '<th style="padding:10px 14px;width:35%;">Feature</th>';
+        echo '<th style="padding:10px 14px;width:15%;">Status</th>';
+        echo '<th style="padding:10px 14px;">Remarks / Solution</th>';
+        echo '</tr></thead><tbody>';
+        $i = 0;
+        foreach ($sec_features as $key => $label) {
+            $status = eden_val($data, $key, 'no');
+            $remarks = eden_val($data, $key . '_remarks');
+            $bg = ($i % 2 === 0) ? '#fff' : '#fafafa';
+            $status_color = (strtolower($status) === 'yes') ? '#2e7d32' : '#c62828';
+            $status_bg = (strtolower($status) === 'yes') ? '#e8f5e9' : '#ffebee';
+            $status_icon = (strtolower($status) === 'yes') ? '✅' : '❌';
+            echo '<tr style="background:' . $bg . ';">';
+            echo '<td style="padding:10px 14px;font-weight:600;border-bottom:1px solid #eee;">' . $label . '</td>';
+            echo '<td style="padding:10px 14px;border-bottom:1px solid #eee;"><span style="background:' . $status_bg . ';color:' . $status_color . ';padding:3px 12px;border-radius:20px;font-weight:700;font-size:13px;">' . $status_icon . ' ' . ucfirst($status) . '</span></td>';
+            echo '<td style="padding:10px 14px;border-bottom:1px solid #eee;color:#555;">' . $remarks . '</td>';
+            echo '</tr>';
+            $i++;
+        }
+        echo '</tbody></table></div>';
+
+        eden_render_section('IT Operations Tools', 'dashicons-admin-tools', array(
+            'encryption_tool' => 'Encryption Tool',
+            'patch_mgmt_solution' => 'Patch Management',
+            'remote_support_tool' => 'Remote Support Tool',
+            'asset_mgmt_system' => 'Asset Management',
+            'siem_system' => 'Log / SIEM System',
+        ), $data);
+
+        eden_render_section('Email & Collaboration', 'dashicons-email', array(
+            'email_platform' => 'Email Platform',
+            'num_email_users' => 'Email Users',
+            'email_backup' => 'Email Backup / Archival',
+            'email_security_solution' => 'Email Security Solution',
+        ), $data);
+
+        eden_render_section('File Server & OS', 'dashicons-open-folder', array(
+            'file_server_type' => 'File Server Type',
+            'server_os_types' => 'Server OS Types',
+            'endpoint_os_types' => 'Endpoint OS Types',
+        ), $data);
+
+        eden_render_section('Backup & Disaster Recovery', 'dashicons-backup', array(
+            'server_backup_solution' => 'Server Backup Solution',
+            'endpoint_backup_solution' => 'Endpoint Backup Solution',
+            'mfa_sso' => 'MFA / SSO Implemented',
+        ), $data);
+
+        eden_render_section('Applications & Databases', 'dashicons-grid-view', array(
+            'total_applications' => 'Total Applications',
+            'web_applications' => 'Web Applications',
+            'databases_count' => 'Databases Count',
+            'database_types' => 'Database Types',
+        ), $data);
+
+        eden_render_section('Website & Domain', 'dashicons-admin-site', array(
+            'domain_provider' => 'Domain Provider',
+            'website_url' => 'Website URL',
+            'ssl_certificate' => 'SSL Certificate',
+        ), $data);
+
+        echo '</div>'; // end white card
+        echo '</div>'; // end wrap
+        return;
+    }
+
+    // ─── LIST VIEW (default) ───
     $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY submission_date DESC LIMIT 100");
+    $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
     echo '<div class="wrap">';
-    echo '<h1><span class="dashicons dashicons-shield" style="margin-right:8px;"></span>IT Infrastructure & Security Assessments</h1>';
-    echo '<p>All client assessments submitted via the website.</p>';
-    echo '<table class="widefat fixed striped">';
-    echo '<thead><tr>
-            <th style="width:50px;">ID</th>
-            <th>Client</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th style="width:100px;">Risk Level</th>
-            <th style="width:70px;">Score</th>
-            <th style="width:160px;">Date</th>
-            <th style="width:80px;">Status</th>
-          </tr></thead><tbody>';
+    echo '<h1 style="display:flex;align-items:center;gap:8px;"><span class="dashicons dashicons-shield" style="color:#d39a06;"></span> IT Infrastructure & Security Assessments</h1>';
+    echo '<p style="color:#666;">All client assessments submitted via the website. Click <strong>View</strong> to see full details.</p>';
 
-    if ($results) {
-        foreach ($results as $row) {
-            $colors = array(
-                'Low' => '#2e7d32',
-                'Medium' => '#f57f17',
-                'High' => '#e65100',
-                'Critical' => '#c62828',
-            );
-            $color = isset($colors[$row->risk_level]) ? $colors[$row->risk_level] : '#666';
-            echo "<tr>
-                    <td>#{$row->id}</td>
-                    <td><strong>{$row->client_name}</strong></td>
-                    <td><a href='mailto:{$row->contact_email}'>{$row->contact_email}</a></td>
-                    <td>{$row->contact_phone}</td>
-                    <td><span style='color:{$color};font-weight:bold;'>{$row->risk_level}</span></td>
-                    <td>{$row->risk_score}</td>
-                    <td>" . date('M j, Y g:i A', strtotime($row->submission_date)) . "</td>
-                    <td>{$row->status}</td>
-                  </tr>";
-        }
+    if (empty($results)) {
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:40px;text-align:center;margin-top:20px;">';
+        echo '<span class="dashicons dashicons-shield" style="font-size:48px;color:#ccc;"></span>';
+        echo '<p style="font-size:16px;color:#999;margin-top:16px;">No assessments submitted yet.</p>';
+        echo '</div>';
     } else {
-        echo '<tr><td colspan="8">No assessments submitted yet.</td></tr>';
+        echo '<table class="widefat fixed striped" style="margin-top:20px;">';
+        echo '<thead><tr>
+                <th style="width:50px;">ID</th>
+                <th>Client</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th style="width:100px;">Risk Level</th>
+                <th style="width:70px;">Score</th>
+                <th style="width:150px;">Date</th>
+                <th style="width:120px;">Actions</th>
+              </tr></thead><tbody>';
+
+        $risk_colors = array('Low' => '#2e7d32', 'Medium' => '#f57f17', 'High' => '#e65100', 'Critical' => '#c62828');
+        $risk_bg = array('Low' => '#e8f5e9', 'Medium' => '#fff8e1', 'High' => '#fff3e0', 'Critical' => '#ffebee');
+
+        foreach ($results as $row) {
+            $rc = isset($risk_colors[$row->risk_level]) ? $risk_colors[$row->risk_level] : '#666';
+            $rb = isset($risk_bg[$row->risk_level]) ? $risk_bg[$row->risk_level] : '#f5f5f5';
+
+            echo '<tr>';
+            echo '<td><strong>#' . $row->id . '</strong></td>';
+            echo '<td><strong>' . esc_html($row->client_name) . '</strong></td>';
+            echo '<td><a href="mailto:' . esc_attr($row->contact_email) . '">' . esc_html($row->contact_email) . '</a></td>';
+            echo '<td>' . esc_html($row->contact_phone) . '</td>';
+            echo '<td><span style="background:' . $rb . ';color:' . $rc . ';padding:4px 14px;border-radius:20px;font-weight:700;font-size:13px;white-space:nowrap;">' . esc_html($row->risk_level) . '</span></td>';
+            echo '<td>' . esc_html($row->risk_score) . '</td>';
+            echo '<td>' . date('M j, Y g:i A', strtotime($row->submission_date)) . '</td>';
+            echo '<td>';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eden-assessments&view_id=' . $row->id)) . '" class="button button-small" title="View full details">👁 View</a> ';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eden-assessments&delete_id=' . $row->id)) . '" class="button button-small" style="color:#c62828;" title="Delete" onclick="return confirm(\'Delete assessment #' . $row->id . '?\');">🗑</a>';
+            echo '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
+        echo '<p style="margin-top:15px;color:#666;">Showing ' . count($results) . ' of ' . $total . ' total assessments.</p>';
     }
-    echo '</tbody></table></div>';
+    echo '</div>';
 }
