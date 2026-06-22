@@ -143,10 +143,7 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
 </script>
 
 
-<script>window.$zoho = window.$zoho || {}; $zoho.salesiq = $zoho.salesiq || { ready: function () { } }</script>
-<script id="zsiqscript"
-    src="https://salesiq.zoho.com/widget?wc=siqd31f2c833422b1c644325cea2f81714c8311334ee8fd60469235a742583f5883"
-    defer></script>
+
 
 
 <?php wp_footer(); ?>
