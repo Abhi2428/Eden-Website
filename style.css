@@ -4500,3 +4500,1366 @@ ol {
 .conditional-field {
     transition: all 0.3s ease;
 }
+
+/* ═══════════════════════════════════════════════ */
+/* CUSTOM CONFIRM MODAL — REPLACES NATIVE confirm() */
+/* ═══════════════════════════════════════════════ */
+.eden-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 22, 40, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    padding: 20px;
+}
+
+.eden-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.eden-modal {
+    background: var(--white);
+    border-radius: 16px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.92) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.eden-modal-overlay.active .eden-modal {
+    transform: scale(1) translateY(0);
+}
+
+.eden-modal-header {
+    padding: 28px 28px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.eden-modal-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fff8e1, #ffe082);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+}
+
+.eden-modal-icon i {
+    font-size: 1.4rem;
+    color: #f57f17;
+}
+
+.eden-modal-title {
+    flex: 1;
+    padding-top: 6px;
+}
+
+.eden-modal-title h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 0 0 4px;
+    line-height: 1.3;
+}
+
+.eden-modal-title p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.eden-modal-body {
+    padding: 20px 28px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.eden-modal-warning-list {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-left: 4px solid #f57f17;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 8px 0 0;
+    list-style: none;
+}
+
+.eden-modal-warning-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.eden-modal-warning-list li::before {
+    content: '\f071';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #f57f17;
+    font-size: 0.8rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.eden-modal-warning-list li strong {
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.eden-modal-warning-list .sub-list {
+    list-style: none;
+    margin: 6px 0 0 8px;
+    padding: 0;
+}
+
+.eden-modal-warning-list .sub-list li {
+    padding: 2px 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.eden-modal-warning-list .sub-list li::before {
+    content: '•';
+    font-family: inherit;
+    color: var(--accent);
+    font-size: 1rem;
+    margin-top: 0;
+}
+
+.eden-modal-footer {
+    padding: 20px 28px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--gray-100);
+    flex-wrap: wrap;
+}
+
+.eden-modal-btn {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.eden-modal-btn-cancel {
+    background: var(--white);
+    color: var(--navy);
+    border-color: var(--gray-300);
+}
+
+.eden-modal-btn-cancel:hover {
+    background: var(--gray-50);
+    border-color: var(--navy);
+    transform: translateY(-1px);
+}
+
+.eden-modal-btn-confirm {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: var(--navy);
+    box-shadow: 0 4px 12px rgba(211, 154, 6, 0.3);
+}
+
+.eden-modal-btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(211, 154, 6, 0.4);
+}
+
+/* Info variant (no warning) */
+.eden-modal.info .eden-modal-icon {
+    background: linear-gradient(135deg, #e3f2fd, #90caf9);
+}
+
+.eden-modal.info .eden-modal-icon i {
+    color: #1565c0;
+}
+
+.eden-modal.info .eden-modal-warning-list {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    border-left-color: #1565c0;
+}
+
+/* Mobile */
+@media (max-width: 540px) {
+    .eden-modal-header {
+        padding: 22px 20px 0;
+        gap: 12px;
+    }
+
+    .eden-modal-body {
+        padding: 16px 20px;
+    }
+
+    .eden-modal-footer {
+        padding: 16px 20px 20px;
+        flex-direction: column-reverse;
+    }
+
+    .eden-modal-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .eden-modal-title h3 {
+        font-size: 1.05rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* ENDPOINT SECURITY TABLE — TIGHT INLINE YES/NO   */
+/* ═══════════════════════════════════════════════ */
+
+/* Force radio group inline inside the security table */
+.security-table .radio-group.toggle-group {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Smaller, compact Yes/No buttons inside the table */
+.security-table .radio-label.compact {
+    padding: 5px 12px !important;
+    font-size: 0.82rem !important;
+    margin: 0 !important;
+    white-space: nowrap;
+    min-width: 60px;
+    justify-content: center;
+}
+
+.security-table .radio-label.compact input[type="radio"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Make the Status column a bit wider so Yes/No fits comfortably */
+.security-table th:nth-child(2),
+.security-table td:nth-child(2) {
+    width: 160px !important;
+    min-width: 160px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Tighten row padding so it looks clean */
+.security-table td {
+    padding: 10px 14px !important;
+    vertical-align: middle;
+}
+
+/* Feature column — keep label bold and aligned */
+.security-table td:first-child {
+    font-weight: 600;
+    color: var(--text);
+    vertical-align: middle;
+}
+
+/* Remarks input — full width, subtle styling */
+.security-table td:last-child input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    background: var(--white);
+    transition: var(--transition);
+}
+
+.security-table td:last-child input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(211, 154, 6, 0.1);
+    outline: none;
+}
+
+/* Mobile fallback — stack only on very small screens */
+@media (max-width: 600px) {
+    .security-table .radio-group.toggle-group {
+        flex-direction: row !important;
+        gap: 4px !important;
+    }
+
+    .security-table .radio-label.compact {
+        padding: 4px 10px !important;
+        font-size: 0.75rem !important;
+        min-width: 50px;
+    }
+
+    .security-table th:nth-child(2),
+    .security-table td:nth-child(2) {
+        width: 130px !important;
+        min-width: 130px;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 2 — TOGGLE SECTIONS AS CARDS               */
+/* Matches Step 3's section-card aesthetic         */
+/* ═══════════════════════════════════════════════ */
+
+/* Each open toggle section becomes a card */
+.toggle-section.open {
+    max-height: 5000px;
+    opacity: 1;
+    margin-top: 20px;
+    margin-bottom: 4px;
+    padding: 28px 28px 22px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    border-top: 1px solid var(--gray-200);
+    /* override default */
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    position: relative;
+}
+
+.toggle-section.open:hover {
+    border-color: rgba(211, 154, 6, 0.3);
+    box-shadow: var(--shadow-md);
+}
+
+/* Decorative accent stripe on the left — like Step 3 cards */
+.toggle-section.open::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent-light));
+    border-radius: var(--radius) 0 0 var(--radius);
+    opacity: 0.85;
+}
+
+/* Add nice spacing between cards when multiple are open */
+.toggle-section+.toggle-section.open {
+    margin-top: 24px;
+}
+
+/* Improve the subsection labels inside toggle sections (acts like card titles) */
+.toggle-section.open>.subsection-label:first-child,
+.toggle-section.open>.form-grid:first-child+.subsection-label,
+.toggle-section.open .subsection-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Nested subsection labels (deeper) — slightly muted */
+.toggle-section.open .conditional-field .subsection-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--gray-100);
+    padding-bottom: 6px;
+    margin: 16px 0 10px;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 2 — SECTION TOGGLE SELECTORS (TOP CARDS)   */
+/* Make the "select section" cards feel premium    */
+/* ═══════════════════════════════════════════════ */
+
+.section-toggles-grid {
+    background: var(--gray-50);
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 28px;
+    position: relative;
+}
+
+.section-toggles-grid::before {
+    content: 'Select sections to fill for this location';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--white);
+    padding: 0 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.section-toggle-card {
+    background: var(--white);
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.section-toggle-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(211, 154, 6, 0.15);
+    border-color: var(--accent);
+}
+
+.section-toggle-card:has(input:checked) {
+    background: linear-gradient(135deg, rgba(211, 154, 6, 0.08), rgba(211, 154, 6, 0.04));
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(211, 154, 6, 0.2);
+}
+
+.section-toggle-card:has(input:checked)::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: var(--accent);
+    font-size: 0.7rem;
+    background: var(--white);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(211, 154, 6, 0.25);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 2 — LOCATION TABS POLISH                   */
+/* ═══════════════════════════════════════════════ */
+
+.location-tabs {
+    background: var(--gray-50);
+    padding: 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 24px;
+    gap: 4px;
+}
+
+.loc-tab {
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 10px 22px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    transition: all 0.25s ease;
+    border-radius: 8px;
+}
+
+.loc-tab:hover {
+    background: var(--white);
+    color: var(--accent);
+    border-color: var(--gray-200);
+}
+
+.loc-tab.active {
+    background: var(--navy);
+    color: var(--white);
+    border-color: var(--navy);
+    box-shadow: 0 2px 8px rgba(18, 44, 85, 0.25);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 2 — Y/N ROWS INSIDE CARDS                  */
+/* Slightly different background to nest visually  */
+/* ═══════════════════════════════════════════════ */
+
+.toggle-section.open .yn-row {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 12px;
+}
+
+.toggle-section.open .yn-row:hover {
+    background: rgba(211, 154, 6, 0.04);
+    border-color: rgba(211, 154, 6, 0.25);
+}
+
+/* Conditional fields inside cards — subtle nested look */
+.toggle-section.open .conditional-field {
+    margin-top: 12px;
+    padding: 16px 18px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent);
+}
+
+/* Dynamic rows — give them a card feel too */
+.toggle-section.open .dynamic-row {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s ease;
+}
+
+.toggle-section.open .dynamic-row:hover {
+    border-color: rgba(211, 154, 6, 0.3);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* MOBILE — keep cards compact                     */
+/* ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .toggle-section.open {
+        padding: 20px 18px 18px;
+        margin-top: 16px;
+    }
+
+    .section-toggles-grid {
+        padding: 24px 16px 16px;
+    }
+
+    .loc-tab {
+        padding: 8px 14px;
+        font-size: 0.82rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* STEP 4 — REVIEW SECTION                          */
+/* ═══════════════════════════════════════════════ */
+
+.review-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.review-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.review-loading i {
+    margin-right: 8px;
+    color: var(--accent);
+}
+
+.review-section {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.review-section:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(211, 154, 6, 0.3);
+}
+
+.review-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent-light));
+}
+
+.review-location::before {
+    background: linear-gradient(180deg, var(--navy), var(--navy-light));
+}
+
+.review-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--gray-50), var(--white));
+    border-bottom: 1px solid var(--gray-200);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.review-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.review-section-icon i {
+    color: var(--accent-light);
+    font-size: 1rem;
+}
+
+.review-section-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0;
+    letter-spacing: 0.2px;
+}
+
+.review-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--white);
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.review-edit-btn:hover {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: var(--navy);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(211, 154, 6, 0.25);
+}
+
+.review-edit-btn i {
+    font-size: 0.78rem;
+}
+
+.review-section-body {
+    padding: 20px 24px;
+}
+
+.review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 28px;
+}
+
+.review-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.review-row:hover {
+    background: rgba(211, 154, 6, 0.04);
+    border-left-color: var(--accent);
+}
+
+.review-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.review-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.review-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-weight: 400;
+}
+
+.review-empty-state {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--gray-300);
+}
+
+.review-empty-state i {
+    color: var(--accent);
+    margin-right: 6px;
+}
+
+/* Badges (Yes / No) */
+.review-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.review-badge i {
+    font-size: 0.7rem;
+}
+
+.review-badge-yes {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.review-badge-no {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.review-badge-na {
+    background: var(--gray-100);
+    color: var(--text-muted);
+}
+
+/* Endpoint Security Table inside Review */
+.review-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+}
+
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.review-table thead {
+    background: var(--navy);
+    color: var(--white);
+}
+
+.review-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.review-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--text);
+}
+
+.review-table tbody tr:nth-child(even) {
+    background: var(--gray-50);
+}
+
+.review-table tbody tr:hover {
+    background: rgba(211, 154, 6, 0.04);
+}
+
+.review-table td:first-child {
+    font-weight: 600;
+}
+
+/* Final consent inside Step 4 */
+.form-step[data-step="4"] .form-consent {
+    margin-top: 8px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(211, 154, 6, 0.06), rgba(211, 154, 6, 0.02));
+    border: 1.5px solid rgba(211, 154, 6, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .review-section-header {
+        padding: 14px 18px;
+    }
+
+    .review-section-body {
+        padding: 16px 18px;
+    }
+
+    .review-section-header h3 {
+        font-size: 0.95rem;
+    }
+
+    .review-edit-btn {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* REVIEW — NESTED SUBSECTION STRUCTURE            */
+/* ═══════════════════════════════════════════════ */
+
+/* Subsection card inside a main review section */
+.review-subsection {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px 14px;
+    margin-bottom: 14px;
+    transition: border-color 0.25s ease;
+}
+
+.review-subsection:last-child {
+    margin-bottom: 0;
+}
+
+.review-subsection:hover {
+    border-color: rgba(211, 154, 6, 0.25);
+}
+
+.review-subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--gray-200);
+}
+
+.review-subsection-title i {
+    color: var(--accent);
+    font-size: 0.9rem;
+    width: 18px;
+    text-align: center;
+}
+
+/* Deeper nesting — for subsection-labels inside open toggle sections */
+.review-nested {
+    background: var(--white);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+
+.review-nested:last-child {
+    margin-bottom: 0;
+}
+
+.review-nested-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+/* Dynamic rows wrapper inside a group */
+.review-dynamic-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Each dynamic row (Connection 1, SAN Unit 1, Drive 1, Extinguisher 1, etc.) */
+.review-dynamic-row {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    transition: border-color 0.2s ease;
+}
+
+.review-dynamic-row:hover {
+    border-color: var(--accent);
+    background: rgba(211, 154, 6, 0.02);
+}
+
+.review-dynamic-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+}
+
+.review-dynamic-title i {
+    font-size: 0.7rem;
+}
+
+/* Tighter grid for dynamic rows (3 cols on wide, smaller padding) */
+.review-grid-tight {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px 16px !important;
+}
+
+.review-grid-tight .review-row {
+    padding: 6px 10px;
+    background: var(--gray-50);
+}
+
+.review-grid-tight .review-label {
+    font-size: 0.68rem;
+}
+
+.review-grid-tight .review-value {
+    font-size: 0.85rem;
+}
+
+/* Tag style (for checkbox group values like compliances, DLP locations) */
+.review-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: linear-gradient(135deg, rgba(211, 154, 6, 0.12), rgba(211, 154, 6, 0.06));
+    color: var(--navy);
+    border: 1px solid rgba(211, 154, 6, 0.3);
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin: 2px 2px;
+}
+
+.review-row-tag .review-value {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Mobile — collapse tight grids */
+@media (max-width: 768px) {
+    .review-grid-tight {
+        grid-template-columns: 1fr !important;
+    }
+
+    .review-subsection {
+        padding: 14px 14px 12px;
+    }
+
+    .review-nested {
+        padding: 10px 12px;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* DRAFT MODAL (CONTINUE WHERE YOU LEFT OFF)       */
+/* ═══════════════════════════════════════════════ */
+
+.eden-draft-modal {
+    max-width: 540px;
+}
+
+.eden-draft-icon {
+    background: linear-gradient(135deg, #e3f2fd, #90caf9) !important;
+}
+
+.eden-draft-icon i {
+    color: #1565c0 !important;
+}
+
+.eden-draft-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 4px 0 16px;
+}
+
+.eden-draft-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.eden-draft-stat:hover {
+    border-color: var(--accent);
+    background: rgba(211, 154, 6, 0.04);
+}
+
+.eden-draft-stat i {
+    font-size: 1.2rem;
+    color: var(--accent);
+    width: 26px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.eden-draft-stat div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.eden-draft-stat .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.eden-draft-stat .stat-value {
+    font-size: 0.88rem;
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.eden-draft-hint {
+    background: linear-gradient(135deg, rgba(211, 154, 6, 0.08), rgba(211, 154, 6, 0.02));
+    border: 1px solid rgba(211, 154, 6, 0.2);
+    border-left: 4px solid var(--accent);
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.eden-draft-hint i {
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* SAVE TOAST (bottom-right corner)                */
+/* ═══════════════════════════════════════════════ */
+
+.eden-save-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 100000;
+    background: var(--white);
+    color: var(--text);
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+    border-left: 4px solid var(--accent);
+    min-width: 260px;
+    max-width: 380px;
+}
+
+.eden-save-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.eden-save-toast i {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.eden-save-toast-success {
+    border-left-color: #2e7d32;
+}
+
+.eden-save-toast-success i {
+    color: #2e7d32;
+}
+
+.eden-save-toast-error {
+    border-left-color: #c62828;
+}
+
+.eden-save-toast-error i {
+    color: #c62828;
+}
+
+@media (max-width: 540px) {
+    .eden-draft-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .eden-save-toast {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        min-width: 0;
+        max-width: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* SECTION TOGGLE CARDS — LIGHTWEIGHT              */
+/* ═══════════════════════════════════════════════ */
+
+.section-toggles-grid {
+    background: var(--gray-50);
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 24px;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.section-toggles-grid::before {
+    content: 'Select sections to fill for this location';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--white);
+    padding: 0 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+/* Card */
+.section-toggle-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font);
+    user-select: none;
+    min-height: 54px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+/* Kill any leftover corner tick from earlier CSS */
+.section-toggle-card::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Hide native checkbox */
+.section-toggle-card input[type="checkbox"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+}
+
+/* Custom circular checkbox on the left */
+.section-toggle-card::before {
+    content: '' !important;
+    display: flex !important;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--gray-300);
+    background: var(--white);
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.65rem;
+    color: transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    top: auto;
+    right: auto;
+    box-shadow: none;
+}
+
+/* Icon next to text */
+.section-toggle-card>i {
+    font-size: 1rem;
+    color: var(--accent);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Hover (subtle) */
+.section-toggle-card:hover {
+    border-color: var(--accent);
+}
+
+/* Checked state — solid, no gradient */
+.section-toggle-card:has(input:checked) {
+    background: #fff8e1;
+    border-color: var(--accent);
+}
+
+.section-toggle-card:has(input:checked)::before {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+    content: '\f00c' !important;
+}
+
+.section-toggle-card:has(input:checked)>span {
+    color: var(--navy);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .section-toggles-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .section-toggles-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .section-toggle-card {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+        min-height: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-toggles-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* PROGRESS BAR — CLICKABLE STEPS                  */
+/* ═══════════════════════════════════════════════ */
+
+.progress-step {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 8px;
+    position: relative;
+}
+
+.progress-step:hover {
+    opacity: 0.85;
+}
+
+.progress-step:hover .step-circle {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(211, 154, 6, 0.15);
+}
+
+.progress-step:hover span {
+    color: var(--accent);
+}
+
+/* Tooltip on hover */
+.progress-step::after {
+    content: 'Click to navigate';
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: var(--white);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.progress-step:hover::after {
+    opacity: 1;
+}
+
+/* Active step shouldn't show "click to navigate" */
+.progress-step.active::after {
+    content: none;
+}
+
+.progress-step.active {
+    cursor: default;
+}
+
+.progress-step.active:hover {
+    opacity: 1;
+}
+
+.progress-step.active:hover .step-circle {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(211, 154, 6, 0.2);
+}

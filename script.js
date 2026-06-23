@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var assessForm = document.getElementById('edenAssessmentForm');
     if (assessForm) {
 
-        var TOTAL_STEPS = 3;
+        var TOTAL_STEPS = 4;
         var currentStep = 1;
         var STORAGE_KEY = 'eden_assessment_draft';
         var formSection = document.getElementById('assessment-form-section');
@@ -506,6 +506,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // ═══════════════════════════════════════════
+        // PROGRESS BAR — CLICK TO NAVIGATE
+        // ═══════════════════════════════════════════
+        document.querySelectorAll('.progress-step').forEach(function (stepEl) {
+            stepEl.style.cursor = 'pointer';
+            stepEl.addEventListener('click', function () {
+                var targetStep = parseInt(this.getAttribute('data-step'));
+                if (!targetStep || targetStep === currentStep) return;
+
+                // ─── Going BACKWARD: always allowed (no validation needed) ───
+                if (targetStep < currentStep) {
+                    showStep(targetStep);
+                    return;
+                }
+
+                // ─── Going FORWARD: validate each step in between ───
+                // Run hard validation on current step first
+                if (!validateStep(currentStep)) return;
+
+                // Check soft warnings for current step
+                var warnings = collectStepWarnings(currentStep);
+                if (warnings.length > 0) {
+                    showEdenModal({
+                        title: 'Some information is missing',
+                        subtitle: 'You can go back and complete it, or skip ahead.',
+                        warnings: warnings,
+                        cancelText: 'Go Back & Complete',
+                        confirmText: 'Skip Anyway',
+                        icon: 'fa-triangle-exclamation'
+                    }).then(function (proceed) {
+                        if (proceed) {
+                            showStep(targetStep);
+                            autoSave();
+                        }
+                    });
+                } else {
+                    showStep(targetStep);
+                    autoSave();
+                }
+            });
+        });
+
+        // ═══════════════════════════════════════════
         // 3. DYNAMIC QUANTITY ROW GENERATOR
         // ═══════════════════════════════════════════
         function generateDynamicRows(input) {
@@ -513,6 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var containerId = input.getAttribute('data-container');
             var tpl = input.getAttribute('data-tpl');
             var prefix = input.getAttribute('data-prefix');
+            var customLabel = input.getAttribute('data-label'); // NEW: optional custom label
             var container = document.getElementById(containerId);
             if (!container) return;
 
@@ -528,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var row = document.createElement('div');
                 row.className = 'dynamic-row';
                 var p = prefix + '_' + i;
-                var label = getRowLabel(tpl, i);
+                var label = getRowLabel(tpl, i, customLabel);
 
                 if (tpl === 'internet') {
                     row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
@@ -558,6 +601,19 @@ document.addEventListener('DOMContentLoaded', function () {
                         '<div class="form-group"><label>Patch Panels (24-port)</label><input type="number" name="' + p + '_pp24" min="0" placeholder="0"></div>' +
                         '<div class="form-group"><label>Patch Panels (48-port)</label><input type="number" name="' + p + '_pp48" min="0" placeholder="0"></div>' +
                         '</div>';
+                } else if (tpl === 'sandrive') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-2">' +
+                        '<div class="form-group"><label>Drive Type</label><select name="' + p + '_type"><option value="">Select</option><option value="SSD">SSD</option><option value="SAS">SAS</option><option value="SATA">SATA</option><option value="NVMe">NVMe</option><option value="HDD">HDD</option></select></div>' +
+                        '<div class="form-group"><label>Capacity per Drive</label><input type="text" name="' + p + '_capacity" placeholder="e.g. 2 TB"></div>' +
+                        '</div>';
+                } else if (tpl === 'extinguisher') {
+                    row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
+                        '<div class="form-grid cols-3">' +
+                        '<div class="form-group"><label>Type</label><select name="' + p + '_type"><option value="">Select</option><option value="ABC Dry Powder">ABC Dry Powder</option><option value="CO2">CO2</option><option value="Foam">Foam</option><option value="Water">Water</option><option value="Wet Chemical">Wet Chemical</option></select></div>' +
+                        '<div class="form-group"><label>Make</label><input type="text" name="' + p + '_make" placeholder="e.g. Ceasefire"></div>' +
+                        '<div class="form-group"><label>Model</label><input type="text" name="' + p + '_model" placeholder="e.g. ABC-6KG"></div>' +
+                        '</div>';
                 } else {
                     row.innerHTML = '<div class="dynamic-row-label">' + label + '</div>' +
                         '<div class="form-grid cols-2">' +
@@ -574,15 +630,19 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        function getRowLabel(tpl, i) {
+        function getRowLabel(tpl, i, customLabel) {
+            if (customLabel && customLabel.trim() !== '') {
+                return customLabel.trim() + ' ' + i;
+            }
             var labels = {
                 internet: 'Connection ', p2p: 'P2P Line ',
                 leased: 'Leased Line ', rack: 'Rack ',
-                makemodel: 'Unit '
+                makemodel: 'Unit ',
+                sandrive: 'Drive ',
+                extinguisher: 'Extinguisher '
             };
             return (labels[tpl] || 'Item ') + i;
         }
-
         // ═══════════════════════════════════════════
         // 4. Y/N CONDITIONAL TRIGGER
         // ═══════════════════════════════════════════
@@ -643,6 +703,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 var val = parseInt(numLocInput.value) || 1;
                 buildLocationTabs(val);
             }
+            if (step === 4) {
+                generateReview();
+            }
         }
 
         function updateProgressBar(step) {
@@ -656,46 +719,102 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Next / Previous (delegated)
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.btn-next')) {
-                if (validateStep(currentStep)) {
-                    showStep(currentStep + 1);
-                    autoSave();
+        // ═══════════════════════════════════════════
+        // 6A. CUSTOM CONFIRM MODAL (replaces native confirm/alert)
+        // ═══════════════════════════════════════════
+        function showEdenModal(opts) {
+            return new Promise(function (resolve) {
+                // Remove any existing modal
+                var existing = document.getElementById('edenConfirmModal');
+                if (existing) existing.remove();
+
+                var overlay = document.createElement('div');
+                overlay.id = 'edenConfirmModal';
+                overlay.className = 'eden-modal-overlay';
+
+                var iconClass = opts.icon || 'fa-triangle-exclamation';
+                var variantClass = opts.variant === 'info' ? 'info' : '';
+
+                var bodyHtml = '';
+                if (opts.warnings && opts.warnings.length > 0) {
+                    bodyHtml = '<ul class="eden-modal-warning-list">';
+                    opts.warnings.forEach(function (w) {
+                        if (typeof w === 'string') {
+                            bodyHtml += '<li><span>' + w + '</span></li>';
+                        } else if (w && w.title) {
+                            bodyHtml += '<li><div><strong>' + w.title + '</strong>';
+                            if (w.items && w.items.length) {
+                                bodyHtml += '<ul class="sub-list">';
+                                w.items.forEach(function (it) {
+                                    bodyHtml += '<li>' + it + '</li>';
+                                });
+                                bodyHtml += '</ul>';
+                            }
+                            bodyHtml += '</div></li>';
+                        }
+                    });
+                    bodyHtml += '</ul>';
+                } else if (opts.bodyText) {
+                    bodyHtml = '<p style="color:var(--text-muted);font-size:0.92rem;line-height:1.6;margin:0;">' + opts.bodyText + '</p>';
                 }
-            }
-            if (e.target.closest('.btn-prev')) {
-                showStep(currentStep - 1);
-            }
-        });
+
+                overlay.innerHTML =
+                    '<div class="eden-modal ' + variantClass + '" role="dialog" aria-modal="true">' +
+                    '<div class="eden-modal-header">' +
+                    '<div class="eden-modal-icon"><i class="fa-solid ' + iconClass + '"></i></div>' +
+                    '<div class="eden-modal-title">' +
+                    '<h3>' + (opts.title || 'Please Confirm') + '</h3>' +
+                    (opts.subtitle ? '<p>' + opts.subtitle + '</p>' : '') +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="eden-modal-body">' + bodyHtml + '</div>' +
+                    '<div class="eden-modal-footer">' +
+                    '<button type="button" class="eden-modal-btn eden-modal-btn-cancel"><i class="fa-solid fa-pen-to-square"></i> ' + (opts.cancelText || 'Go Back & Edit') + '</button>' +
+                    '<button type="button" class="eden-modal-btn eden-modal-btn-confirm">' + (opts.confirmText || 'Proceed Anyway') + ' <i class="fa-solid fa-arrow-right"></i></button>' +
+                    '</div>' +
+                    '</div>';
+
+                document.body.appendChild(overlay);
+                requestAnimationFrame(function () { overlay.classList.add('active'); });
+
+                function close(result) {
+                    overlay.classList.remove('active');
+                    setTimeout(function () { if (overlay.parentNode) overlay.remove(); }, 250);
+                    resolve(result);
+                }
+
+                overlay.querySelector('.eden-modal-btn-cancel').addEventListener('click', function () { close(false); });
+                overlay.querySelector('.eden-modal-btn-confirm').addEventListener('click', function () { close(true); });
+                overlay.addEventListener('click', function (e) { if (e.target === overlay) close(false); });
+                document.addEventListener('keydown', function escHandler(e) {
+                    if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', escHandler); }
+                });
+            });
+        }
 
         // ═══════════════════════════════════════════
-        // 6. VALIDATION
+        // 6B. HARD VALIDATION (required fields only)
         // ═══════════════════════════════════════════
         function validateStep(step) {
             var isValid = true;
             var stepEl = document.querySelector('.form-step[data-step="' + step + '"]');
             if (!stepEl) return true;
-
             stepEl.querySelectorAll('.field-error').forEach(function (el) { el.textContent = ''; });
             stepEl.querySelectorAll('.form-group').forEach(function (el) { el.classList.remove('has-error'); });
 
             if (step === 1) {
                 var name = (document.getElementById('client_name').value || '').trim();
                 if (!name) { setFieldError('client_name', 'Organization name is required.'); isValid = false; }
-
                 var email = (document.getElementById('contact_email').value || '').trim();
                 if (!email) { setFieldError('contact_email', 'Email is required.'); isValid = false; }
                 else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError('contact_email', 'Enter a valid email.'); isValid = false; }
-
                 var phone = (document.getElementById('contact_phone').value || '').trim();
                 if (!phone) { setFieldError('contact_phone', 'Phone is required.'); isValid = false; }
-
                 var locs = (document.getElementById('num_locations').value || '').trim();
                 if (!locs || parseInt(locs) < 1) { setFieldError('num_locations', 'At least 1 location required.'); isValid = false; }
             }
 
-            if (step === 3) {
+            if (step === 4) {
                 var consent = document.getElementById('consent_checkbox');
                 if (consent && !consent.checked) {
                     var ce = document.getElementById('consent-error');
@@ -722,6 +841,134 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // ═══════════════════════════════════════════
+        // 6C. SOFT VALIDATION (warnings → custom modal)
+        // ═══════════════════════════════════════════
+        function collectStepWarnings(step) {
+            var warnings = [];
+
+            // ─── STEP 2: Locations + open sections ───
+            if (step === 2) {
+                var locCount = parseInt((numLocInput && numLocInput.value) || '1') || 1;
+                var emptyLocs = [];
+                var partialLocs = [];
+
+                for (var i = 0; i < locCount; i++) {
+                    var panel = locContents.querySelector('.location-panel[data-loc="' + i + '"]');
+                    if (!panel) continue;
+
+                    // Check ALL inputs outside toggle-sections (basic location fields)
+                    var hasBasicData = false;
+                    panel.querySelectorAll('input, select, textarea').forEach(function (f) {
+                        if (f.closest('.toggle-section')) return; // skip toggle contents here
+                        if (f.type === 'checkbox' || f.type === 'radio') {
+                            if (f.checked && !f.classList.contains('section-toggle')) hasBasicData = true;
+                        } else if (f.value && f.value.trim() !== '') {
+                            hasBasicData = true;
+                        }
+                    });
+
+                    // Check open toggle sections
+                    var openEmptySections = [];
+                    panel.querySelectorAll('.section-toggle:checked').forEach(function (toggle) {
+                        var targetId = toggle.getAttribute('data-target');
+                        var section = document.getElementById(targetId);
+                        if (!section) return;
+                        var hasData = false;
+                        section.querySelectorAll('input, select, textarea').forEach(function (f) {
+                            if (f.type === 'checkbox' || f.type === 'radio') {
+                                if (f.checked) hasData = true;
+                            } else if (f.value && f.value.trim() !== '') {
+                                hasData = true;
+                            }
+                        });
+                        if (!hasData) {
+                            var labelEl = toggle.parentElement;
+                            var label = labelEl ? labelEl.textContent.trim() : 'Section';
+                            openEmptySections.push(label);
+                        }
+                        if (hasData) hasBasicData = true; // location has at least some data
+                    });
+
+                    var locLabel = 'Location ' + (i + 1);
+                    if (!hasBasicData) {
+                        emptyLocs.push(locLabel);
+                    } else if (openEmptySections.length > 0) {
+                        partialLocs.push({ title: locLabel + ' has empty toggled sections:', items: openEmptySections });
+                    }
+                }
+
+                if (emptyLocs.length > 0) {
+                    warnings.push({
+                        title: 'No information entered for: ' + emptyLocs.join(', '),
+                        items: ['You declared ' + locCount + ' location(s) but some are completely blank.']
+                    });
+                }
+                partialLocs.forEach(function (p) { warnings.push(p); });
+            }
+
+            // ─── STEP 3: Empty section cards ───
+            if (step === 3) {
+                var stepEl = document.querySelector('.form-step[data-step="3"]');
+                if (stepEl) {
+                    var emptyCards = [];
+                    stepEl.querySelectorAll('.section-card').forEach(function (card) {
+                        var hasData = false;
+                        card.querySelectorAll('input, select, textarea').forEach(function (f) {
+                            if (f.type === 'checkbox' || f.type === 'radio') {
+                                if (f.checked) hasData = true;
+                            } else if (f.value && f.value.trim() !== '') {
+                                hasData = true;
+                            }
+                        });
+                        if (!hasData) {
+                            var h = card.querySelector('.section-card-header h3');
+                            emptyCards.push(h ? h.textContent.trim() : 'Untitled section');
+                        }
+                    });
+                    if (emptyCards.length > 0) {
+                        warnings.push({
+                            title: 'These sections have no data entered:',
+                            items: emptyCards
+                        });
+                    }
+                }
+            }
+
+            return warnings;
+        }
+
+        // ═══════════════════════════════════════════
+        // 6D. NEXT / PREV CLICK HANDLER (with modal)
+        // ═══════════════════════════════════════════
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-next')) {
+                if (!validateStep(currentStep)) return;
+                var warnings = collectStepWarnings(currentStep);
+                if (warnings.length > 0) {
+                    showEdenModal({
+                        title: 'Some information is missing',
+                        subtitle: 'You can go back and complete it, or proceed if this is intentional.',
+                        warnings: warnings,
+                        cancelText: 'Go Back & Complete',
+                        confirmText: 'Proceed Anyway',
+                        icon: 'fa-triangle-exclamation'
+                    }).then(function (proceed) {
+                        if (proceed) {
+                            showStep(currentStep + 1);
+                            autoSave();
+                        }
+                    });
+                } else {
+                    showStep(currentStep + 1);
+                    autoSave();
+                }
+            }
+            if (e.target.closest('.btn-prev')) {
+                showStep(currentStep - 1);
+            }
+        });
+
         assessForm.addEventListener('input', function (e) {
             var g = e.target.closest('.form-group');
             if (g) { g.classList.remove('has-error'); var err = g.querySelector('.field-error'); if (err) err.textContent = ''; }
@@ -734,33 +981,553 @@ document.addEventListener('DOMContentLoaded', function () {
             if (g) { g.classList.remove('has-error'); var err = g.querySelector('.field-error'); if (err) err.textContent = ''; }
         });
 
+
+        // ═══════════════════════════════════════════
+        // 6E. REVIEW STEP — STRUCTURE-AWARE SUMMARY
+        // ═══════════════════════════════════════════
+        function generateReview() {
+            var container = document.getElementById('reviewContainer');
+            if (!container) return;
+
+            var html = '';
+            html += renderStep1Review();
+
+            var locCount = parseInt(numLocInput.value) || 1;
+            for (var i = 0; i < locCount; i++) {
+                html += renderLocationReview(i);
+            }
+
+            html += renderStep3Review();
+
+            container.innerHTML = html;
+
+            // Bind edit buttons
+            container.querySelectorAll('.review-edit-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var jumpTo = parseInt(this.getAttribute('data-jump'));
+                    var jumpLoc = this.getAttribute('data-loc');
+                    showStep(jumpTo);
+                    if (jumpLoc !== null && jumpLoc !== undefined && jumpLoc !== '') {
+                        setTimeout(function () { switchLocTab(parseInt(jumpLoc)); }, 100);
+                    }
+                });
+            });
+        }
+
+        // ─── STEP 1 ───
+        function renderStep1Review() {
+            var groups = [
+                {
+                    title: 'Contact Information', icon: 'fa-id-card', fields: [
+                        { name: 'client_name', label: 'Organization Name' },
+                        { name: 'contact_email', label: 'Contact Email' },
+                        { name: 'contact_phone', label: 'Contact Phone' },
+                        { name: 'designation', label: 'Designation' }
+                    ]
+                },
+                {
+                    title: 'Organization Size', icon: 'fa-users', fields: [
+                        { name: 'org_size', label: 'Organization Size' },
+                        { name: 'num_employees', label: 'No. of Employees' },
+                        { name: 'total_employees', label: 'Total Employees (All Locations)' },
+                        { name: 'num_locations', label: 'No. of Locations' },
+                        { name: 'work_days', label: 'Work Days per Week' },
+                        { name: 'total_working_hours', label: 'Total Working Hours/Day' }
+                    ]
+                },
+                {
+                    title: 'Departments & Vendors', icon: 'fa-sitemap', fields: [
+                        { name: 'num_departments', label: 'No. of Departments' },
+                        { name: 'departments_list', label: 'Departments List' },
+                        { name: 'num_vendors', label: 'No. of Vendors' },
+                        { name: 'vendors_list', label: 'Vendors List' }
+                    ]
+                },
+                {
+                    title: 'IT Support', icon: 'fa-headset', fields: [
+                        { name: 'inhouse_it_support', label: 'Inhouse IT Support' },
+                        { name: 'num_it_support_staff', label: 'IT Team Strength' }
+                    ]
+                }
+            ];
+
+            var bodyHtml = '';
+            groups.forEach(function (g) {
+                var rows = '';
+                g.fields.forEach(function (f) {
+                    var val = getFieldValue(f.name);
+                    if (val !== '' && val !== null && val !== undefined && !(Array.isArray(val) && val.length === 0)) {
+                        rows += '<div class="review-row"><span class="review-label">' + f.label + '</span><span class="review-value">' + formatValue(val) + '</span></div>';
+                    }
+                });
+                if (rows) {
+                    bodyHtml += '<div class="review-subsection">' +
+                        '<div class="review-subsection-title"><i class="fa-solid ' + g.icon + '"></i> ' + g.title + '</div>' +
+                        '<div class="review-grid">' + rows + '</div>' +
+                        '</div>';
+                }
+            });
+
+            if (!bodyHtml) return '';
+            return wrapReviewSection({ title: 'Organization Details', icon: 'fa-building', jumpStep: 1 }, bodyHtml);
+        }
+
+        // ─── STEP 2 (LOCATION) — FIXED ───
+        function renderLocationReview(idx) {
+            var num = idx + 1;
+            var panel = locContents.querySelector('.location-panel[data-loc="' + idx + '"]');
+            if (!panel) return '';
+
+            var bodyHtml = '';
+
+            // 1. BASIC INFO — every field NOT inside a toggle-section / section-toggles-grid
+            var basicRows = '';
+            panel.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (!f.name) return;
+                if (f.closest('.toggle-section')) return;          // skip stuff inside open toggle sections
+                if (f.closest('.section-toggles-grid')) return;     // skip the toggle selector checkboxes
+                if (f.classList.contains('section-toggle')) return; // double safety
+
+                var val;
+                if (f.type === 'checkbox') {
+                    if (!f.checked) return;
+                    val = f.value || 'yes';
+                } else if (f.type === 'radio') {
+                    if (!f.checked) return;
+                    val = f.value;
+                } else {
+                    val = f.value;
+                    if (!val || val.trim() === '') return;
+                }
+
+                var lbl = getFieldLabel(f) || f.name;
+                lbl = lbl.replace(/\*$/, '').replace(/\s+/g, ' ').trim();
+                basicRows += '<div class="review-row"><span class="review-label">' + lbl + '</span><span class="review-value">' + formatValue(val) + '</span></div>';
+            });
+
+            if (basicRows) {
+                bodyHtml += '<div class="review-subsection">' +
+                    '<div class="review-subsection-title"><i class="fa-solid fa-info-circle"></i> Basic Information</div>' +
+                    '<div class="review-grid">' + basicRows + '</div>' +
+                    '</div>';
+            }
+
+            // 2. Each OPEN toggle section → subsection
+            panel.querySelectorAll('.section-toggle:checked').forEach(function (toggle) {
+                var targetId = toggle.getAttribute('data-target');
+                var section = document.getElementById(targetId);
+                if (!section) return;
+
+                var toggleCard = toggle.closest('.section-toggle-card');
+                var labelInfo = extractLabelInfo(toggleCard);
+
+                // Try structured render first, fall back to flat extraction
+                var sectionContent = renderStructuredContent(section);
+                if (!sectionContent) {
+                    // Fallback: just extract all fields flat
+                    var flatRows = extractAllFieldsFlat(section);
+                    if (flatRows) {
+                        sectionContent = '<div class="review-grid">' + flatRows + '</div>';
+                    }
+                }
+
+                if (sectionContent) {
+                    bodyHtml += '<div class="review-subsection">' +
+                        '<div class="review-subsection-title"><i class="' + labelInfo.iconClass + '"></i> ' + labelInfo.text + '</div>' +
+                        sectionContent +
+                        '</div>';
+                }
+            });
+
+            if (!bodyHtml) {
+                bodyHtml = '<div class="review-empty-state"><i class="fa-solid fa-circle-info"></i> No information entered for this location.</div>';
+            }
+
+            return wrapReviewSection({
+                title: 'Location ' + num,
+                icon: 'fa-location-dot',
+                jumpStep: 2,
+                jumpLoc: idx,
+                isLocation: true
+            }, bodyHtml);
+        }
+
+
+        // ─── STEP 3 ───
+        function renderStep3Review() {
+            var step3 = document.querySelector('.form-step[data-step="3"]');
+            if (!step3) return '';
+
+            var html = '';
+            step3.querySelectorAll('.section-card').forEach(function (card) {
+                var headerH3 = card.querySelector('.section-card-header h3');
+                var iconEl = card.querySelector('.section-card-icon i');
+                var title = headerH3 ? headerH3.textContent.trim() : 'Section';
+                var iconClass = iconEl ? iconEl.className : 'fa-solid fa-folder';
+
+                var content = renderStructuredContent(card);
+                if (content) {
+                    html += wrapReviewSection({ title: title, icon: iconClass.replace('fa-solid ', ''), jumpStep: 3 }, content);
+                }
+            });
+            return html;
+        }
+
+        // ─── RECURSIVE CONTENT WALKER ───
+        // Walks a container, groups items by subsection-labels, and handles dynamic-rows + conditional-fields
+        // ─── STRUCTURED CONTENT WALKER — FIXED ───
+        function renderStructuredContent(container) {
+            var groups = [];
+            var currentGroup = { label: null, rowsHtml: '', dynamicHtml: '', specialHtml: '' };
+            var processedFields = new WeakSet();
+
+            function flush() {
+                if (currentGroup.rowsHtml || currentGroup.dynamicHtml || currentGroup.specialHtml) {
+                    groups.push(currentGroup);
+                }
+                currentGroup = { label: null, rowsHtml: '', dynamicHtml: '', specialHtml: '' };
+            }
+
+            function walk(node) {
+                Array.from(node.children).forEach(function (child) {
+                    if (child.classList.contains('section-card-header')) return;
+
+                    // Subsection label → start a new group
+                    if (child.classList.contains('subsection-label')) {
+                        flush();
+                        currentGroup.label = child.textContent.trim();
+                        return;
+                    }
+
+                    // Dynamic rows container
+                    if (child.classList.contains('dynamic-rows') ||
+                        (child.id && (child.id.indexOf('-rows-') > -1 || child.id.indexOf('-drives-') > -1))) {
+                        Array.from(child.children).forEach(function (dynRow) {
+                            var rowLabelEl = dynRow.querySelector('.dynamic-row-label');
+                            var rowTitle = rowLabelEl ? rowLabelEl.textContent.trim() : 'Item';
+                            var rowFields = extractFieldsAsRows(dynRow);
+                            // Mark inputs inside dynamic rows as processed
+                            dynRow.querySelectorAll('input, select, textarea').forEach(function (f) { processedFields.add(f); });
+                            if (rowFields) {
+                                currentGroup.dynamicHtml +=
+                                    '<div class="review-dynamic-row">' +
+                                    '<div class="review-dynamic-title"><i class="fa-solid fa-angle-right"></i> ' + rowTitle + '</div>' +
+                                    '<div class="review-grid review-grid-tight">' + rowFields + '</div>' +
+                                    '</div>';
+                            }
+                        });
+                        return;
+                    }
+
+                    // Security table
+                    if (child.querySelector && child.querySelector('.security-table')) {
+                        var tableHtml = renderSecurityTable(child);
+                        child.querySelectorAll('input, select, textarea').forEach(function (f) { processedFields.add(f); });
+                        if (tableHtml) currentGroup.specialHtml += tableHtml;
+                        return;
+                    }
+
+                    // Conditional fields → recurse into them
+                    if (child.classList.contains('conditional-field')) {
+                        walk(child);
+                        return;
+                    }
+
+                    // Skip nested toggle sections / section cards
+                    if (child.classList.contains('toggle-section') || child.classList.contains('section-card')) {
+                        return;
+                    }
+
+                    // Regular field-bearing element — extract any inputs
+                    var rows = extractFieldsAsRows(child);
+                    child.querySelectorAll('input, select, textarea').forEach(function (f) { processedFields.add(f); });
+                    currentGroup.rowsHtml += rows;
+                });
+            }
+
+            walk(container);
+            flush();
+
+            // Catch any inputs that weren't picked up by structured walk (safety net)
+            var leftoverRows = '';
+            container.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (processedFields.has(f)) return;
+                if (!f.name) return;
+                if (f.closest('.security-table')) return;
+                if (f.classList.contains('section-toggle')) return;
+
+                var val;
+                if (f.type === 'checkbox') {
+                    if (!f.checked) return;
+                    val = f.value || 'yes';
+                } else if (f.type === 'radio') {
+                    if (!f.checked) return;
+                    val = f.value;
+                } else {
+                    val = f.value;
+                    if (!val || val.trim() === '') return;
+                }
+                var lbl = getFieldLabel(f) || f.name;
+                lbl = lbl.replace(/\*$/, '').replace(/\s+/g, ' ').trim();
+                leftoverRows += '<div class="review-row"><span class="review-label">' + lbl + '</span><span class="review-value">' + formatValue(val) + '</span></div>';
+            });
+            if (leftoverRows) {
+                groups.push({ label: null, rowsHtml: leftoverRows, dynamicHtml: '', specialHtml: '' });
+            }
+
+            var html = '';
+            groups.forEach(function (g) {
+                if (!g.rowsHtml && !g.dynamicHtml && !g.specialHtml) return;
+                var inner = '';
+                if (g.rowsHtml) inner += '<div class="review-grid">' + g.rowsHtml + '</div>';
+                if (g.dynamicHtml) inner += '<div class="review-dynamic-wrap">' + g.dynamicHtml + '</div>';
+                if (g.specialHtml) inner += g.specialHtml;
+
+                if (g.label) {
+                    html += '<div class="review-nested">' +
+                        '<div class="review-nested-title">' + g.label + '</div>' +
+                        inner +
+                        '</div>';
+                } else {
+                    html += inner;
+                }
+            });
+            return html;
+        }
+
+
+        // ─── SECURITY TABLE RENDERER ───
+        function renderSecurityTable(container) {
+            var table = container.querySelector('.security-table');
+            if (!table) return '';
+            var rows = '';
+            table.querySelectorAll('tbody tr').forEach(function (tr) {
+                var firstTd = tr.querySelector('td:first-child');
+                if (!firstTd) return;
+                var feature = firstTd.textContent.trim();
+                var radio = tr.querySelector('input[type="radio"]:checked');
+                var remarksInput = tr.querySelector('input[type="text"]');
+                var status = radio ? radio.value : '';
+                var remarks = remarksInput ? (remarksInput.value || '').trim() : '';
+                if (!status && !remarks) return;
+                var badge = status === 'yes'
+                    ? '<span class="review-badge review-badge-yes"><i class="fa-solid fa-check"></i> Yes</span>'
+                    : (status === 'no' ? '<span class="review-badge review-badge-no"><i class="fa-solid fa-xmark"></i> No</span>' : '<span class="review-badge review-badge-na">—</span>');
+                rows += '<tr><td>' + feature + '</td><td>' + badge + '</td><td>' + (remarks || '<span class="review-empty">—</span>') + '</td></tr>';
+            });
+            if (!rows) return '';
+            return '<div class="review-table-wrap"><table class="review-table"><thead><tr><th>Feature</th><th style="width:100px;">Status</th><th>Remarks</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+        }
+
+        // ─── HELPERS ───
+        function extractFieldsAsRows(element) {
+            var rows = '';
+            if (!element || !element.querySelectorAll) return '';
+
+            // Skip security-table fields (handled separately)
+            if (element.closest && element.closest('.security-table')) return '';
+
+            element.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (!f.name) return;
+                if (f.closest('.security-table')) return; // handled separately
+                if (f.classList.contains('section-toggle')) return; // skip the toggle checkbox itself
+
+                var val;
+                if (f.type === 'checkbox') {
+                    if (!f.checked) return;
+                    val = f.value || 'yes';
+                } else if (f.type === 'radio') {
+                    if (!f.checked) return;
+                    val = f.value;
+                } else {
+                    val = f.value;
+                    if (!val || val.trim() === '') return;
+                }
+
+                var lbl = getFieldLabel(f);
+                if (!lbl) lbl = f.name;
+                lbl = lbl.replace(/\*$/, '').replace(/\s+/g, ' ').trim();
+
+                // For grouped checkboxes (name="xxx[]"), prefix with parent label + value
+                if (f.type === 'checkbox' && f.name.indexOf('[]') > -1) {
+                    // We aggregate these later — for now render each as a tag
+                    rows += '<div class="review-row review-row-tag"><span class="review-label">' + lbl + '</span><span class="review-value"><span class="review-tag">' + f.value + '</span></span></div>';
+                    return;
+                }
+
+                rows += '<div class="review-row"><span class="review-label">' + lbl + '</span><span class="review-value">' + formatValue(val) + '</span></div>';
+            });
+            return rows;
+        }
+        // ─── FLAT FALLBACK — extracts ALL fields, ignores structure ───
+        function extractAllFieldsFlat(container) {
+            var rows = '';
+            container.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (!f.name) return;
+                if (f.closest('.security-table')) return;
+                if (f.classList.contains('section-toggle')) return;
+
+                var val;
+                if (f.type === 'checkbox') {
+                    if (!f.checked) return;
+                    val = f.value || 'yes';
+                } else if (f.type === 'radio') {
+                    if (!f.checked) return;
+                    val = f.value;
+                } else {
+                    val = f.value;
+                    if (!val || val.trim() === '') return;
+                }
+                var lbl = getFieldLabel(f) || f.name;
+                lbl = lbl.replace(/\*$/, '').replace(/\s+/g, ' ').trim();
+                rows += '<div class="review-row"><span class="review-label">' + lbl + '</span><span class="review-value">' + formatValue(val) + '</span></div>';
+            });
+            return rows;
+        }
+        function getFieldLabel(f) {
+            // Radio in yn-row → use yn-label
+            if (f.type === 'radio') {
+                var ynRow = f.closest('.yn-row');
+                if (ynRow) {
+                    var ynLabel = ynRow.querySelector('.yn-label');
+                    if (ynLabel) return ynLabel.textContent.trim();
+                }
+            }
+            // Form-group's main label (not the radio/checkbox-label children)
+            var fg = f.closest('.form-group');
+            if (fg) {
+                var labels = fg.querySelectorAll(':scope > label');
+                for (var i = 0; i < labels.length; i++) {
+                    if (!labels[i].classList.contains('radio-label') && !labels[i].classList.contains('checkbox-label')) {
+                        return labels[i].textContent.trim();
+                    }
+                }
+            }
+            // Dynamic row context
+            var dr = f.closest('.dynamic-row');
+            if (dr) {
+                var inner = f.closest('.form-group');
+                if (inner) {
+                    var lbl = inner.querySelector('label');
+                    if (lbl) return lbl.textContent.trim();
+                }
+            }
+            return '';
+        }
+
+        function extractLabelInfo(toggleCard) {
+            var info = { text: 'Section', iconClass: 'fa-solid fa-folder' };
+            if (!toggleCard) return info;
+            var clone = toggleCard.cloneNode(true);
+            var cb = clone.querySelector('input');
+            if (cb) cb.remove();
+            var iconEl = clone.querySelector('i');
+            if (iconEl) {
+                info.iconClass = iconEl.className;
+                iconEl.remove();
+            }
+            info.text = clone.textContent.trim();
+            return info;
+        }
+
+        function wrapReviewSection(opts, body) {
+            var locAttr = (opts.jumpLoc !== undefined && opts.jumpLoc !== null) ? ' data-loc="' + opts.jumpLoc + '"' : '';
+            var locClass = opts.isLocation ? ' review-location' : '';
+            var iconFull = opts.icon && opts.icon.indexOf('fa-') === 0 ? 'fa-solid ' + opts.icon : (opts.icon || 'fa-solid fa-folder');
+            return '<div class="review-section' + locClass + '">' +
+                '<div class="review-section-header">' +
+                '<div class="review-section-title">' +
+                '<div class="review-section-icon"><i class="' + iconFull + '"></i></div>' +
+                '<h3>' + opts.title + '</h3>' +
+                '</div>' +
+                '<button type="button" class="review-edit-btn" data-jump="' + opts.jumpStep + '"' + locAttr + '>' +
+                '<i class="fa-solid fa-pen-to-square"></i> Edit' +
+                '</button>' +
+                '</div>' +
+                '<div class="review-section-body">' + body + '</div>' +
+                '</div>';
+        }
+
+        function getFieldValue(name) {
+            var radio = assessForm.querySelector('input[type="radio"][name="' + name + '"]:checked');
+            if (radio) return radio.value;
+            var checkboxes = assessForm.querySelectorAll('input[type="checkbox"][name="' + name + '[]"]:checked');
+            if (checkboxes.length) {
+                var arr = [];
+                checkboxes.forEach(function (c) { arr.push(c.value); });
+                return arr;
+            }
+            var field = assessForm.querySelector('[name="' + name + '"]');
+            if (field) {
+                if (field.type === 'checkbox') return field.checked ? 'yes' : '';
+                return field.value || '';
+            }
+            return '';
+        }
+
+        function formatValue(val) {
+            if (Array.isArray(val)) return val.map(function (v) { return '<span class="review-tag">' + v + '</span>'; }).join(' ');
+            if (val === 'yes') return '<span class="review-badge review-badge-yes"><i class="fa-solid fa-check"></i> Yes</span>';
+            if (val === 'no') return '<span class="review-badge review-badge-no"><i class="fa-solid fa-xmark"></i> No</span>';
+            return String(val);
+        }
         // ═══════════════════════════════════════════
         // 7. COLLECT FORM DATA
         // ═══════════════════════════════════════════
         function collectFormData() {
             var data = {};
+
+            // Text/number/email/tel/url/textarea/select
             assessForm.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="url"], textarea, select').forEach(function (el) {
                 if (el.name) data[el.name] = el.value;
             });
+
+            // Checked radios
             assessForm.querySelectorAll('input[type="radio"]:checked').forEach(function (el) {
                 if (el.name) data[el.name] = el.value;
             });
+
+            // Checkboxes — collect ALL (checked AND unchecked) for arrays, plus single checkboxes
             var cbGroups = {};
-            assessForm.querySelectorAll('input[type="checkbox"]:checked').forEach(function (el) {
+            var seenGroupNames = {};
+
+            assessForm.querySelectorAll('input[type="checkbox"]').forEach(function (el) {
                 if (!el.name) return;
+
                 if (el.name.indexOf('[]') > -1) {
                     var clean = el.name.replace('[]', '');
+                    seenGroupNames[clean] = true;
                     if (!cbGroups[clean]) cbGroups[clean] = [];
-                    cbGroups[clean].push(el.value);
+                    if (el.checked) cbGroups[clean].push(el.value);
                 } else {
-                    data[el.name] = el.value;
+                    data[el.name] = el.checked ? (el.value || 'yes') : '';
                 }
             });
-            for (var key in cbGroups) { data[key] = cbGroups[key]; }
+
+            for (var key in seenGroupNames) {
+                data[key] = cbGroups[key] || [];
+            }
+
+            // ─── NEW: Save section toggle states by their data-target ───
+            // This handles checkboxes that don't have name attributes (.section-toggle)
+            var sectionToggles = {};
+            assessForm.querySelectorAll('.section-toggle').forEach(function (cb) {
+                var target = cb.getAttribute('data-target');
+                if (target) sectionToggles[target] = cb.checked;
+            });
+            data._section_toggles = sectionToggles;
+
+            // ─── NEW: Save Y/N conditional trigger states (radios that reveal sections) ───
+            // These are already saved via radio name, but we also save which conditional fields were visible
+            var conditionalStates = {};
+            assessForm.querySelectorAll('.conditional-field').forEach(function (cf) {
+                if (cf.id) conditionalStates[cf.id] = (cf.style.display !== 'none');
+            });
+            data._conditional_states = conditionalStates;
+
             data._loc_count = parseInt(numLocInput.value) || 1;
             return data;
         }
-
         // ═══════════════════════════════════════════
         // 8. FORM SUBMISSION (AJAX)
         // ═══════════════════════════════════════════
@@ -888,32 +1655,75 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // ═══════════════════════════════════════════
-        // 10. SAVE & RESTORE DRAFT
+        // 10. SAVE & RESTORE DRAFT (HARDENED)
         // ═══════════════════════════════════════════
-        function autoSave() {
+
+        // Save throttling — prevents rapid hits on every keystroke
+        var autoSaveTimer = null;
+        var lastSavedAt = 0;
+
+        function autoSave(showFeedback) {
             try {
                 var formData = collectFormData();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                var payload = {
                     step: currentStep,
                     locCount: parseInt(numLocInput.value) || 1,
                     data: formData,
-                    timestamp: new Date().toISOString()
-                }));
-            } catch (e) { }
+                    timestamp: new Date().toISOString(),
+                    version: 2  // bump version if schema changes
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+                lastSavedAt = Date.now();
+
+                if (showFeedback) {
+                    showSaveToast('Progress saved successfully', 'success');
+                }
+            } catch (e) {
+                if (showFeedback) {
+                    showSaveToast('Could not save — storage may be full', 'error');
+                }
+                console.warn('autoSave failed:', e);
+            }
         }
 
+        // Debounced auto-save while typing (fires 1.5s after user stops typing)
+        function debouncedAutoSave() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(function () { autoSave(false); }, 1500);
+        }
+
+        // Hook auto-save into every form change/input
+        assessForm.addEventListener('input', debouncedAutoSave);
+        assessForm.addEventListener('change', debouncedAutoSave);
+
+        // Manual save button
         var saveBtn = document.getElementById('saveProgressBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
-                autoSave();
-                if (saveStatus) {
-                    saveStatus.textContent = 'Progress saved!';
-                    saveStatus.style.display = 'inline';
-                    setTimeout(function () { saveStatus.style.display = 'none'; }, 2500);
-                }
+                autoSave(true);
             });
         }
 
+        // ─── TOAST NOTIFICATION ───
+        function showSaveToast(msg, type) {
+            var existing = document.getElementById('edenSaveToast');
+            if (existing) existing.remove();
+
+            var toast = document.createElement('div');
+            toast.id = 'edenSaveToast';
+            toast.className = 'eden-save-toast eden-save-toast-' + (type || 'success');
+            var icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+            toast.innerHTML = '<i class="fa-solid ' + icon + '"></i> <span>' + msg + '</span>';
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(function () { toast.classList.add('show'); });
+            setTimeout(function () {
+                toast.classList.remove('show');
+                setTimeout(function () { if (toast.parentNode) toast.remove(); }, 350);
+            }, 2800);
+        }
+
+        // ─── DRAFT RESTORE FLOW ───
         function tryRestoreDraft() {
             try {
                 var saved = localStorage.getItem(STORAGE_KEY);
@@ -925,65 +1735,214 @@ document.addEventListener('DOMContentLoaded', function () {
                 var diffDays = (new Date() - savedDate) / (1000 * 60 * 60 * 24);
                 if (diffDays > 7) { clearSavedDraft(); return; }
 
-                if (!confirm('We found a saved draft from ' + savedDate.toLocaleDateString() + '. Continue where you left off?')) {
-                    clearSavedDraft(); return;
+                // Count how many fields have data (so we can show summary)
+                var filledCount = 0;
+                for (var k in obj.data) {
+                    if (k.charAt(0) === '_') continue;
+                    var v = obj.data[k];
+                    if (Array.isArray(v) ? v.length : (v && String(v).trim() !== '')) filledCount++;
                 }
 
-                if (obj.locCount && numLocInput) {
-                    numLocInput.value = obj.locCount;
-                    buildLocationTabs(obj.locCount);
+                // Format friendly date
+                var dateStr = savedDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+                var timeStr = savedDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+                showDraftModal({
+                    dateStr: dateStr,
+                    timeStr: timeStr,
+                    step: obj.step || 1,
+                    locCount: obj.locCount || 1,
+                    filledCount: filledCount,
+                    onContinue: function () { restoreDraft(obj); },
+                    onDiscard: function () { clearSavedDraft(); }
+                });
+            } catch (e) {
+                console.warn('Restore draft failed:', e);
+            }
+        }
+
+        function restoreDraft(obj) {
+            var data = obj.data;
+
+            // 1. Rebuild location tabs FIRST (so panels exist)
+            if (obj.locCount && numLocInput) {
+                numLocInput.value = obj.locCount;
+                buildLocationTabs(obj.locCount);
+            }
+
+            // 2. ─── RESTORE SECTION TOGGLES FIRST ─── (so sections open and reveal their fields)
+            if (data._section_toggles) {
+                for (var target in data._section_toggles) {
+                    if (!data._section_toggles[target]) continue;
+                    var toggleCb = assessForm.querySelector('.section-toggle[data-target="' + target + '"]');
+                    if (toggleCb) {
+                        toggleCb.checked = true;
+                        // Manually add open class instead of relying on change event (which would clear fields if unchecked)
+                        var sec = document.getElementById(target);
+                        if (sec) sec.classList.add('open');
+                    }
                 }
+            }
 
-                var data = obj.data;
-                for (var key in data) {
-                    if (key.charAt(0) === '_') continue;
-                    var val = data[key];
+            // 3. Populate text/number/email/textarea/select fields
+            for (var key in data) {
+                if (key.charAt(0) === '_') continue;
+                var val = data[key];
+                if (Array.isArray(val)) continue;
+                var field = assessForm.querySelector('[name="' + key + '"]');
+                if (!field) continue;
+                if (field.type === 'radio' || field.type === 'checkbox') continue;
+                field.value = val;
+            }
 
-                    if (Array.isArray(val)) {
-                        val.forEach(function (v) {
-                            var cb = assessForm.querySelector('input[name="' + key + '[]"][value="' + v + '"]');
-                            if (cb) cb.checked = true;
-                        });
-                        continue;
-                    }
-
-                    var radio = assessForm.querySelector('input[type="radio"][name="' + key + '"][value="' + val + '"]');
-                    if (radio) {
-                        radio.checked = true;
-                        radio.dispatchEvent(new Event('change'));
-                        continue;
-                    }
-
-                    var field = assessForm.querySelector('[name="' + key + '"]');
-                    if (field && field.type !== 'radio' && field.type !== 'checkbox') {
-                        field.value = val;
-                        if (field.classList.contains('eden-qty-trigger')) {
-                            field.dispatchEvent(new Event('input'));
-                        }
-                    }
+            // 4. Restore radios — fire change event so Y/N conditionals reveal
+            for (var key2 in data) {
+                if (key2.charAt(0) === '_') continue;
+                var val2 = data[key2];
+                if (Array.isArray(val2)) continue;
+                var radio = assessForm.querySelector('input[type="radio"][name="' + key2 + '"][value="' + val2 + '"]');
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+            }
 
-                // Restore dynamic row values after they're built
-                setTimeout(function () {
-                    for (var key in data) {
-                        if (key.charAt(0) === '_') continue;
-                        var val = data[key];
-                        if (Array.isArray(val)) continue;
-                        var field = assessForm.querySelector('[name="' + key + '"]');
-                        if (field && field.type !== 'radio' && field.type !== 'checkbox') {
-                            field.value = val;
-                        }
-                    }
-                }, 100);
-
-                if (obj.step && obj.step > 1 && obj.step <= TOTAL_STEPS) {
-                    showStep(obj.step);
+            // 5. Restore single checkboxes (consent, individual Y/N checkboxes)
+            for (var key3 in data) {
+                if (key3.charAt(0) === '_') continue;
+                var val3 = data[key3];
+                if (Array.isArray(val3)) continue;
+                var cb = assessForm.querySelector('input[type="checkbox"][name="' + key3 + '"]');
+                if (!cb) continue;
+                if (cb.classList.contains('section-toggle')) continue; // already handled in step 2
+                if (val3 === 'yes' || val3 === 'on' || val3 === cb.value) {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-            } catch (e) { }
+            }
+
+            // 6. Restore grouped checkboxes (name="xxx[]")
+            for (var key4 in data) {
+                if (key4.charAt(0) === '_') continue;
+                var val4 = data[key4];
+                if (!Array.isArray(val4)) continue;
+                val4.forEach(function (v) {
+                    var box = assessForm.querySelector('input[type="checkbox"][name="' + key4 + '[]"][value="' + v + '"]');
+                    if (box) {
+                        box.checked = true;
+                        box.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+
+            // 7. ─── RESTORE CONDITIONAL FIELD VISIBILITY ─── (extra safety for Y/N triggered sections)
+            if (data._conditional_states) {
+                for (var cfId in data._conditional_states) {
+                    if (!data._conditional_states[cfId]) continue;
+                    var cf = document.getElementById(cfId);
+                    if (cf) cf.style.display = '';
+                }
+            }
+
+            // 8. Trigger qty inputs to generate dynamic rows
+            assessForm.querySelectorAll('.eden-qty-trigger').forEach(function (f) {
+                if (f.value && parseInt(f.value) > 0) {
+                    f.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+
+            // 9. After dynamic rows generate, fill their child values (2 passes for reliability)
+            requestAnimationFrame(function () {
+                setTimeout(function () { fillDynamicRowValues(data); }, 50);
+                setTimeout(function () { fillDynamicRowValues(data); }, 250);
+                setTimeout(function () { fillDynamicRowValues(data); }, 600);
+            });
+
+            // 10. Jump to saved step
+            if (obj.step && obj.step > 1 && obj.step <= TOTAL_STEPS) {
+                setTimeout(function () { showStep(obj.step); }, 400);
+            }
+
+            showSaveToast('Draft restored successfully — continuing from step ' + (obj.step || 1), 'success');
+        }
+
+        function fillDynamicRowValues(data) {
+            for (var key in data) {
+                if (key.charAt(0) === '_') continue;
+                var val = data[key];
+                if (Array.isArray(val)) continue;
+                var field = assessForm.querySelector('[name="' + key + '"]');
+                if (!field) continue;
+                if (field.type === 'radio' || field.type === 'checkbox') continue;
+                if (!field.value || field.value !== String(val)) {
+                    field.value = val;
+                }
+            }
+            // Re-restore selects inside dynamic rows
+            for (var key2 in data) {
+                if (key2.charAt(0) === '_') continue;
+                var val2 = data[key2];
+                if (Array.isArray(val2)) continue;
+                var sel = assessForm.querySelector('select[name="' + key2 + '"]');
+                if (sel && sel.value !== String(val2)) sel.value = val2;
+            }
         }
 
         function clearSavedDraft() {
             try { localStorage.removeItem(STORAGE_KEY); } catch (e) { }
+        }
+
+        // ─── CUSTOM DRAFT MODAL ───
+        function showDraftModal(opts) {
+            var existing = document.getElementById('edenDraftModal');
+            if (existing) existing.remove();
+
+            var overlay = document.createElement('div');
+            overlay.id = 'edenDraftModal';
+            overlay.className = 'eden-modal-overlay';
+
+            overlay.innerHTML =
+                '<div class="eden-modal eden-draft-modal" role="dialog" aria-modal="true">' +
+                '<div class="eden-modal-header">' +
+                '<div class="eden-modal-icon eden-draft-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>' +
+                '<div class="eden-modal-title">' +
+                '<h3>Welcome Back! 👋</h3>' +
+                '<p>We found a saved draft from your previous session.</p>' +
+                '</div>' +
+                '</div>' +
+                '<div class="eden-modal-body">' +
+                '<div class="eden-draft-stats">' +
+                '<div class="eden-draft-stat"><i class="fa-solid fa-calendar-days"></i><div><span class="stat-label">Saved on</span><span class="stat-value">' + opts.dateStr + ' at ' + opts.timeStr + '</span></div></div>' +
+                '<div class="eden-draft-stat"><i class="fa-solid fa-layer-group"></i><div><span class="stat-label">You were on</span><span class="stat-value">Step ' + opts.step + ' of ' + TOTAL_STEPS + '</span></div></div>' +
+                '<div class="eden-draft-stat"><i class="fa-solid fa-location-dot"></i><div><span class="stat-label">Locations</span><span class="stat-value">' + opts.locCount + ' configured</span></div></div>' +
+                '<div class="eden-draft-stat"><i class="fa-solid fa-pen-fancy"></i><div><span class="stat-label">Fields filled</span><span class="stat-value">' + opts.filledCount + ' entries</span></div></div>' +
+                '</div>' +
+                '<p class="eden-draft-hint"><i class="fa-solid fa-circle-info"></i> You can continue where you left off, or start fresh.</p>' +
+                '</div>' +
+                '<div class="eden-modal-footer">' +
+                '<button type="button" class="eden-modal-btn eden-modal-btn-cancel" id="edenDraftDiscard"><i class="fa-solid fa-trash-can"></i> Start Fresh</button>' +
+                '<button type="button" class="eden-modal-btn eden-modal-btn-confirm" id="edenDraftContinue"><i class="fa-solid fa-arrow-rotate-right"></i> Continue Draft</button>' +
+                '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(function () { overlay.classList.add('active'); });
+
+            function close() {
+                overlay.classList.remove('active');
+                setTimeout(function () { if (overlay.parentNode) overlay.remove(); }, 250);
+            }
+
+            document.getElementById('edenDraftContinue').addEventListener('click', function () {
+                close();
+                opts.onContinue();
+            });
+            document.getElementById('edenDraftDiscard').addEventListener('click', function () {
+                if (confirm('Are you sure? Your saved progress will be permanently deleted.')) {
+                    close();
+                    opts.onDiscard();
+                }
+            });
         }
 
         // ═══════════════════════════════════════════

@@ -280,65 +280,143 @@ function eden_contacts_admin_page()
     global $wpdb;
     $table_name = $wpdb->prefix . 'eden_contacts';
 
+    // ─── Mark read action ───
     if (isset($_GET['mark_read'])) {
         $wpdb->update($table_name, array('is_read' => 1), array('id' => intval($_GET['mark_read'])), array('%d'), array('%d'));
     }
+
+    // ─── Delete action ───
     if (isset($_GET['delete_id'])) {
         $wpdb->delete($table_name, array('id' => intval($_GET['delete_id'])), array('%d'));
         echo '<div class="notice notice-success"><p>Entry deleted.</p></div>';
     }
 
+    // ─── DETAIL VIEW ───
+    if (isset($_GET['view_id'])) {
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['view_id'])));
+        if (!$row) {
+            echo '<div class="wrap"><h1>Submission Not Found</h1><p><a href="' . admin_url('admin.php?page=eden-contacts') . '">&larr; Back to list</a></p></div>';
+            return;
+        }
+
+        // Auto-mark as read when viewed
+        if (!$row->is_read) {
+            $wpdb->update($table_name, array('is_read' => 1), array('id' => $row->id), array('%d'), array('%d'));
+        }
+
+        echo '<div class="wrap">';
+
+        // Top bar
+        echo '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">';
+        echo '<div>';
+        echo '<h1 style="margin:0;"><span class="dashicons dashicons-email-alt" style="margin-right:8px;color:#d39a06;"></span>Submission #' . $row->id . '</h1>';
+        echo '<p style="color:#666;margin:4px 0 0;">Received ' . date('F j, Y \a\t g:i A', strtotime($row->submitted_at)) . '</p>';
+        echo '</div>';
+        echo '<div style="display:flex;gap:8px;">';
+        echo '<a href="' . admin_url('admin.php?page=eden-contacts') . '" class="button">&larr; Back to List</a>';
+        echo '<a href="mailto:' . esc_attr($row->email) . '?subject=Re: ' . esc_attr($row->interest) . '" class="button button-primary"><span class="dashicons dashicons-email" style="margin-top:3px;margin-right:4px;"></span> Reply via Email</a>';
+        echo '<button onclick="window.print();" class="button"><span class="dashicons dashicons-printer" style="margin-top:3px;margin-right:4px;"></span> Print</button>';
+        echo '</div></div>';
+
+        // Contact Info Cards
+        echo '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:28px;">';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;">';
+        echo '<div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;">Contact</div>';
+        echo '<div style="font-size:18px;font-weight:700;color:#122c55;margin-bottom:6px;">' . esc_html($row->first_name . ' ' . $row->last_name) . '</div>';
+        if ($row->company)
+            echo '<div style="color:#666;font-size:14px;">' . esc_html($row->company) . '</div>';
+        echo '</div>';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;">';
+        echo '<div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;">Email & Phone</div>';
+        echo '<div style="font-size:14px;margin-bottom:4px;"><a href="mailto:' . esc_attr($row->email) . '">' . esc_html($row->email) . '</a></div>';
+        echo '<div style="color:#666;font-size:14px;"><a href="tel:' . esc_attr($row->phone) . '" style="color:#666;text-decoration:none;">' . esc_html($row->phone) . '</a></div>';
+        echo '</div>';
+
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;">';
+        echo '<div style="font-size:12px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;">Area of Interest</div>';
+        echo '<div style="display:inline-block;background:#fff8e1;color:#d39a06;padding:6px 14px;border-radius:20px;font-weight:700;font-size:14px;">' . esc_html($row->interest) . '</div>';
+        echo '</div>';
+
+        echo '</div>';
+
+        // FULL MESSAGE
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:28px;margin-bottom:20px;">';
+        echo '<h2 style="margin:0 0 16px;font-size:16px;color:#122c55;display:flex;align-items:center;gap:8px;">';
+        echo '<span class="dashicons dashicons-format-chat" style="color:#d39a06;"></span> Full Message';
+        echo '</h2>';
+        echo '<div style="background:#fafafa;border-left:4px solid #d39a06;padding:18px 22px;border-radius:6px;font-size:15px;line-height:1.7;color:#333;white-space:pre-wrap;word-wrap:break-word;">';
+        echo esc_html($row->message);
+        echo '</div>';
+        echo '</div>';
+
+        // Meta info
+        echo '<div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:18px;font-size:13px;color:#666;display:flex;gap:24px;flex-wrap:wrap;">';
+        echo '<div><strong>Submission ID:</strong> #' . esc_html($row->id) . '</div>';
+        echo '<div><strong>IP Address:</strong> ' . esc_html($row->ip_address ?: 'N/A') . '</div>';
+        echo '<div><strong>Status:</strong> ' . ($row->is_read ? '✅ Read' : '🆕 New') . '</div>';
+        echo '</div>';
+
+        echo '</div>'; // end wrap
+        return;
+    }
+
+    // ─── LIST VIEW (default) ───
     $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY submitted_at DESC");
     $unread = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE is_read = 0");
+    $total = count($results);
 
     echo '<div class="wrap">';
-    echo '<h1>Contact Form Submissions';
+    echo '<h1 style="display:flex;align-items:center;gap:8px;">';
+    echo '<span class="dashicons dashicons-email-alt" style="color:#d39a06;"></span> Contact Form Submissions';
     if ($unread > 0) {
         echo ' <span style="background:#d39a06;color:#fff;padding:4px 12px;border-radius:20px;font-size:14px;margin-left:10px;">' . esc_html($unread) . ' new</span>';
     }
     echo '</h1>';
+    echo '<p style="color:#666;">All contact form submissions from your website. Click <strong>View</strong> to see the full message and contact details.</p>';
 
     if (empty($results)) {
-        echo '<p>No submissions yet.</p>';
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:40px;text-align:center;margin-top:20px;">';
+        echo '<span class="dashicons dashicons-email-alt" style="font-size:48px;color:#ccc;"></span>';
+        echo '<p style="font-size:16px;color:#999;margin-top:16px;">No submissions yet.</p>';
+        echo '</div>';
     } else {
         echo '<table class="widefat fixed striped" style="margin-top:20px;">';
         echo '<thead><tr>';
-        echo '<th width="4%">#</th>';
-        echo '<th width="14%">Name</th>';
-        echo '<th width="16%">Email</th>';
-        echo '<th width="10%">Phone</th>';
-        echo '<th width="12%">Company</th>';
-        echo '<th width="12%">Interest</th>';
-        echo '<th width="14%">Message</th>';
-        echo '<th width="10%">Date</th>';
-        echo '<th width="8%">Actions</th>';
+        echo '<th style="width:50px;">ID</th>';
+        echo '<th>Name</th>';
+        echo '<th>Email</th>';
+        echo '<th style="width:130px;">Phone</th>';
+        echo '<th>Company</th>';
+        echo '<th style="width:140px;">Interest</th>';
+        echo '<th style="width:140px;">Date</th>';
+        echo '<th style="width:140px;">Actions</th>';
         echo '</tr></thead><tbody>';
 
         foreach ($results as $row) {
             $bg = $row->is_read ? '' : 'background:#fff8e1;font-weight:600;';
             echo '<tr style="' . esc_attr($bg) . '">';
-            echo '<td>' . esc_html($row->id) . '</td>';
-            echo '<td>' . esc_html($row->first_name . ' ' . $row->last_name) . '</td>';
+            echo '<td><strong>#' . esc_html($row->id) . '</strong></td>';
+            echo '<td><strong>' . esc_html($row->first_name . ' ' . $row->last_name) . '</strong>' . ($row->is_read ? '' : ' <span style="background:#d39a06;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px;margin-left:4px;">NEW</span>') . '</td>';
             echo '<td><a href="mailto:' . esc_attr($row->email) . '">' . esc_html($row->email) . '</a></td>';
             echo '<td>' . esc_html($row->phone) . '</td>';
             echo '<td>' . esc_html($row->company) . '</td>';
-            echo '<td>' . esc_html($row->interest) . '</td>';
-            echo '<td>' . esc_html(wp_trim_words($row->message, 10)) . '</td>';
-            echo '<td>' . esc_html(date('d M Y', strtotime($row->submitted_at))) . '</td>';
+            echo '<td><span style="background:#fff8e1;color:#d39a06;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px;">' . esc_html($row->interest) . '</span></td>';
+            echo '<td>' . esc_html(date('M j, Y g:i A', strtotime($row->submitted_at))) . '</td>';
             echo '<td>';
-            if (!$row->is_read) {
-                echo '<a href="' . esc_url(admin_url('admin.php?page=eden-contacts&mark_read=' . $row->id)) . '" title="Mark read">&#128065;</a> ';
-            }
-            echo '<a href="' . esc_url(admin_url('admin.php?page=eden-contacts&delete_id=' . $row->id)) . '" title="Delete" onclick="return confirm(\'Delete this entry?\');">&#128465;</a>';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eden-contacts&view_id=' . $row->id)) . '" class="button button-small" title="View full message">👁 View</a> ';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=eden-contacts&delete_id=' . $row->id)) . '" class="button button-small" style="color:#c62828;" title="Delete" onclick="return confirm(\'Delete submission #' . $row->id . '?\');">🗑</a>';
             echo '</td>';
             echo '</tr>';
         }
-
         echo '</tbody></table>';
-        echo '<p style="margin-top:15px;color:#666;">Total: ' . count($results) . ' submissions</p>';
+        echo '<p style="margin-top:15px;color:#666;">Total: ' . esc_html($total) . ' submissions';
+        if ($unread > 0)
+            echo ' (<strong style="color:#d39a06;">' . esc_html($unread) . ' unread</strong>)';
+        echo '</p>';
     }
     echo '</div>';
-
 }
 
 // =============================================
@@ -984,8 +1062,10 @@ function eden_assessments_admin_page()
         eden_render_section('Storage', 'dashicons-database', array(
             'num_nas' => 'NAS Devices',
             'nas_capacity' => 'NAS Capacity',
-            'num_san' => 'SAN Devices',
-            'san_capacity' => 'SAN Capacity',
+            'has_san' => 'SAN Storage Present',
+            'san_num_drives' => 'SAN - No. of Drives',
+            'san_raw_capacity' => 'SAN - Total Raw Capacity',
+            'san_usable_capacity' => 'SAN - Total Usable Capacity',
         ), $data);
 
         eden_render_section('End-User Devices', 'dashicons-laptop', array(
@@ -1020,12 +1100,16 @@ function eden_assessments_admin_page()
         ), $data);
 
         eden_render_section('Power & Safety', 'dashicons-superhero', array(
-            'fire_extinguishers' => 'Fire Extinguishers',
-            'fire_alarm_system' => 'Fire Alarm System',
+            'fire_alarm_system' => 'Fire Alarm System (Office)',
+            'has_extinguishers' => 'Fire Extinguishers Present',
+            'ext_quantity' => 'Extinguisher Quantity',
+            'has_ups' => 'UPS Installed',
+            'ups_quantity' => 'UPS Quantity (Units)',
             'ups_type' => 'UPS Type',
             'ups_mode' => 'UPS Mode',
             'ups_capacity' => 'UPS Capacity',
             'ups_backup_time' => 'UPS Backup Time',
+            'ups_make_model' => 'UPS Make / Model',
         ), $data);
 
         eden_render_section('Video Conferencing', 'dashicons-video-alt2', array(
@@ -1102,6 +1186,8 @@ function eden_assessments_admin_page()
         eden_render_section('Backup & Disaster Recovery', 'dashicons-backup', array(
             'server_backup_solution' => 'Server Backup Solution',
             'endpoint_backup_solution' => 'Endpoint Backup Solution',
+            'nas_backup' => 'NAS Backup',
+            'm365_collab_backup' => 'M365 / G-Suite Collab Backup',
             'mfa_sso' => 'MFA / SSO Implemented',
         ), $data);
 
@@ -1117,7 +1203,17 @@ function eden_assessments_admin_page()
             'website_url' => 'Website URL',
             'ssl_certificate' => 'SSL Certificate',
         ), $data);
+        eden_render_section('SIEM / SOC', 'dashicons-shield-alt', array(
+            'siem_deployed' => 'SIEM Solution Deployed',
+            'siem_deployment' => 'SIEM Deployment',
+            'soc_247' => 'SOC Monitoring 24/7',
+            'soc_type' => 'SOC Type',
+        ), $data);
 
+        eden_render_section('Compliance & Standards', 'dashicons-awards', array(
+            'has_compliance' => 'Follows Compliances',
+            'compliances' => 'Compliances Followed',
+        ), $data);
         echo '</div>'; // end white card
         echo '</div>'; // end wrap
         return;
@@ -1173,6 +1269,7 @@ function eden_assessments_admin_page()
 
         echo '</tbody></table>';
         echo '<p style="margin-top:15px;color:#666;">Showing ' . count($results) . ' of ' . $total . ' total assessments.</p>';
+
     }
     echo '</div>';
 }

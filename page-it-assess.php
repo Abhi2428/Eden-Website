@@ -45,15 +45,7 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
     </div>
 </section>
 
-<!-- TRUST BAR -->
-<div class="eden-trust-bar">
-    <div class="eden-container">
-        <div class="trust-item"><i class="fas fa-circle-check"></i> <strong>500+</strong> Assessments</div>
-        <div class="trust-item"><i class="fas fa-building"></i> <strong>200+</strong> Clients</div>
-        <div class="trust-item"><i class="fas fa-star"></i> <strong>99%</strong> Satisfaction</div>
-        <div class="trust-item"><i class="fas fa-lock"></i> <strong>100%</strong> Secure</div>
-    </div>
-</div>
+
 
 <!-- FORM SECTION -->
 <section class="eden-assess-form-section" id="assessment-form-section">
@@ -66,13 +58,20 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
             </div>
             <div class="progress-steps">
                 <div class="progress-step active" data-step="1">
-                    <div class="step-circle">1</div><span>Organization</span>
+                    <div class="step-circle">1</div>
+                    <span>Organization</span>
                 </div>
                 <div class="progress-step" data-step="2">
-                    <div class="step-circle">2</div><span>Location Infrastructure</span>
+                    <div class="step-circle">2</div>
+                    <span>Location Infrastructure</span>
                 </div>
                 <div class="progress-step" data-step="3">
-                    <div class="step-circle">3</div><span>Security &amp; Operations</span>
+                    <div class="step-circle">3</div>
+                    <span>Security &amp; Operations</span>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="step-circle">4</div>
+                    <span>Review &amp; Submit</span>
                 </div>
             </div>
         </div>
@@ -191,25 +190,28 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                 </div>
             </div>
 
-            <!-- ══════ STEP 3: Security & Operations ══════ -->
             <div class="form-step" data-step="3">
                 <div class="step-header">
-                    <h2><i class="fas fa-shield-halved"></i> Step 3: Security &amp; Operations</h2>
-                    <p>Organization-wide security posture, email, and IT operations.</p>
+                    <h2><i class="fa-solid fa-shield-halved"></i> Step 3: Security & Operations</h2>
+                    <p>Organization-wide security posture, identity, email, and IT operations.</p>
                 </div>
 
-                <!-- ─── CARD: Endpoint Security ─── -->
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 1. IDENTITY & ACCESS MANAGEMENT (with Endpoint Security inside) -->
+                <!-- ═══════════════════════════════════════════ -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-shield-halved"></i></div>
+                        <div class="section-card-icon"><i class="fa-solid fa-user-shield"></i></div>
                         <div>
-                            <h3>Endpoint Security</h3>
-                            <p>Security solutions protecting your endpoints</p>
+                            <h3>Identity & Access Management</h3>
+                            <p>Directory services, authentication, endpoint security & data protection</p>
                         </div>
                     </div>
 
+                    <!-- AD / Workgroup -->
                     <div class="form-grid cols-2">
-                        <div class="form-group"><label>AD / Workgroup</label>
+                        <div class="form-group">
+                            <label>AD / Workgroup</label>
                             <select name="ad_workgroup">
                                 <option value="">Select</option>
                                 <option value="Active Directory">Active Directory</option>
@@ -217,291 +219,47 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                 <option value="Both">Both</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>Type of AD</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label"><input type="checkbox" name="ad_type[]" value="On-Prem">
-                                    On-Prem</label>
-                                <label class="checkbox-label"><input type="checkbox" name="ad_type[]" value="Azure AD">
-                                    Azure AD</label>
-                                <label class="checkbox-label"><input type="checkbox" name="ad_type[]" value="Hybrid">
-                                    Hybrid</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="yn-row">
-                        <label class="yn-label"><i class="fas fa-shield-check"></i> Do you have an Endpoint Security
-                            Solution?</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="endpoint_security" value="yes"
-                                    class="eden-yn-trigger" data-target="endpoint_sec_details"> Yes</label>
-                            <label class="radio-label"><input type="radio" name="endpoint_security" value="no"
-                                    class="eden-yn-trigger" data-target="endpoint_sec_details"> No</label>
-                        </div>
-                    </div>
-
-                    <div class="conditional-field" id="endpoint_sec_details" style="display:none;">
-                        <div class="security-table-wrapper">
-                            <table class="security-table">
-                                <thead>
-                                    <tr>
-                                        <th><i class="fas fa-shield-halved"></i> Feature</th>
-                                        <th>Status</th>
-                                        <th>Remarks / Solution Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Antivirus / Anti-malware</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_antivirus" value="yes"> Yes</label><label
-                                                    class="radio-label compact"><input type="radio" name="sec_antivirus"
-                                                        value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_antivirus_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Endpoint Firewall</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_endpoint_firewall" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_endpoint_firewall" value="no" checked> No</label>
-                                            </div>
-                                        </td>
-                                        <td><input type="text" name="sec_endpoint_firewall_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Application Control</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_app_control" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_app_control" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_app_control_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Device Control</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_device_control" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_device_control" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_device_control_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Vulnerability Assessment</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_vuln_assessment" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_vuln_assessment" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_vuln_assessment_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Patch Management</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_patch_mgmt" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_patch_mgmt" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_patch_mgmt_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> SIEM Integration</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_siem" value="yes"> Yes</label><label
-                                                    class="radio-label compact"><input type="radio" name="sec_siem"
-                                                        value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_siem_remarks" placeholder="Solution name...">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Encryption</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_encryption" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_encryption" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_encryption_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> EDR / XDR</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_edr_xdr" value="yes"> Yes</label><label
-                                                    class="radio-label compact"><input type="radio" name="sec_edr_xdr"
-                                                        value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_edr_xdr_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Software Control</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_software_control" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_software_control" value="no" checked> No</label></div>
-                                        </td>
-                                        <td><input type="text" name="sec_software_control_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shield-halved"></i> Inventory Tracking</td>
-                                        <td>
-                                            <div class="toggle-group"><label class="radio-label compact"><input
-                                                        type="radio" name="sec_inventory_tracking" value="yes">
-                                                    Yes</label><label class="radio-label compact"><input type="radio"
-                                                        name="sec_inventory_tracking" value="no" checked> No</label>
-                                            </div>
-                                        </td>
-                                        <td><input type="text" name="sec_inventory_tracking_remarks"
-                                                placeholder="Solution name..."></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ─── CARD: IT Operations & Tools ─── -->
-                <div class="section-card">
-                    <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-toolbox"></i></div>
-                        <div>
-                            <h3>IT Operations &amp; Tools</h3>
-                            <p>Tools used for day-to-day IT management</p>
-                        </div>
-                    </div>
-                    <div class="form-grid cols-2">
-                        <div class="form-group"><label for="encryption_tool">Encryption Tool</label><input type="text"
-                                id="encryption_tool" name="encryption_tool" placeholder="e.g. BitLocker, VeraCrypt">
-                        </div>
-                        <div class="form-group"><label for="patch_mgmt_solution">Patch Management Solution</label><input
-                                type="text" id="patch_mgmt_solution" name="patch_mgmt_solution"
-                                placeholder="e.g. WSUS, ManageEngine"></div>
-                        <div class="form-group"><label for="remote_support_tool">Remote Support Tool</label><input
-                                type="text" id="remote_support_tool" name="remote_support_tool"
-                                placeholder="e.g. AnyDesk, TeamViewer"></div>
-                        <div class="form-group"><label for="asset_mgmt_system">Asset Management System</label><input
-                                type="text" id="asset_mgmt_system" name="asset_mgmt_system"
-                                placeholder="e.g. ServiceNow, GLPI"></div>
-                        <div class="form-group"><label for="siem_system">Log / SIEM System</label><input type="text"
-                                id="siem_system" name="siem_system" placeholder="e.g. Splunk, Wazuh"></div>
-                    </div>
-                </div>
-
-                <!-- ─── CARD: Identity & Access Management ─── -->
-                <div class="section-card">
-                    <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-user-shield"></i></div>
-                        <div>
-                            <h3>Identity &amp; Access Management</h3>
-                            <p>Directory services, authentication, and data protection</p>
-                        </div>
-                    </div>
-
-                    <div class="form-grid cols-2">
-                        <div class="form-group"><label for="ad_type_select">Type of AD</label>
-                            <select id="ad_type_select" name="ad_type_select">
+                        <div class="form-group">
+                            <label>Type of AD</label>
+                            <select name="ad_type">
                                 <option value="">Select</option>
-                                <option value="On-Prem AD">On-Prem AD</option>
+                                <option value="On-Prem">On-Prem AD</option>
                                 <option value="Azure AD">Azure AD</option>
                                 <option value="Hybrid">Hybrid</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-                        <div class="form-group"><label for="other_iam">Other IAM Solution</label>
-                            <input type="text" id="other_iam" name="other_iam"
-                                placeholder="e.g. ScaleFusion / Okta / JumpCloud">
-                        </div>
                     </div>
 
+                    <!-- MFA / SSO -->
                     <div class="yn-row">
-                        <label class="yn-label"><i class="fas fa-sitemap"></i> Active Directory</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="active_directory" value="yes"
-                                    class="eden-yn-trigger" data-target="ad_details_sec"> Yes</label>
-                            <label class="radio-label"><input type="radio" name="active_directory" value="no"
-                                    class="eden-yn-trigger" data-target="ad_details_sec"> No</label>
+                        <label class="yn-label"><i class="fa-solid fa-key"></i> MFA / SSO Solution Implemented?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="mfa_sso" value="yes"
+                                    class="eden-yn-trigger" data-target="mfa-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="mfa_sso" value="no"
+                                    class="eden-yn-trigger" data-target="mfa-details"> No</label>
                         </div>
                     </div>
-                    <div class="conditional-field" id="ad_details_sec" style="display:none;">
-                        <div class="form-group"><label>Microsoft AD Deployment</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="ms_ad_deployment" value="On-Prem">
-                                    On-Prem</label>
-                                <label class="radio-label"><input type="radio" name="ms_ad_deployment" value="Cloud">
-                                    Cloud</label>
-                            </div>
-                        </div>
-                        <div class="form-group"><label>Directory Services</label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label"><input type="checkbox" name="dir_services[]"
-                                        value="Entra-ID-Free"> Entra-ID-Free</label>
-                                <label class="checkbox-label"><input type="checkbox" name="dir_services[]"
-                                        value="Entra-ID-P1"> Entra-ID-P1</label>
-                                <label class="checkbox-label"><input type="checkbox" name="dir_services[]"
-                                        value="Entra-ID-P2"> Entra-ID-P2</label>
-                                <label class="checkbox-label"><input type="checkbox" name="dir_services[]"
-                                        value="G-Suite"> G-Suite</label>
-                                <label class="checkbox-label"><input type="checkbox" name="dir_services[]"
-                                        value="Other LDAP"> Other LDAP</label>
-                            </div>
-                        </div>
+                    <div class="conditional-field" id="mfa-details" style="display:none;">
+                        <div class="form-group"><label>MFA/SSO Solution Name</label><input type="text"
+                                name="mfa_solution" placeholder="e.g. Okta, Microsoft Entra"></div>
                     </div>
 
+                    <!-- DLP -->
                     <div class="yn-row">
-                        <label class="yn-label"><i class="fas fa-key"></i> MFA / SSO Solution</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="mfa_sso" value="yes"
-                                    class="eden-yn-trigger" data-target="mfa_details_sec"> Yes</label>
-                            <label class="radio-label"><input type="radio" name="mfa_sso" value="no"
-                                    class="eden-yn-trigger" data-target="mfa_details_sec"> No</label>
+                        <label class="yn-label"><i class="fa-solid fa-shield-virus"></i> DLP (Data Leak
+                            Prevention)?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="dlp" value="yes"
+                                    class="eden-yn-trigger" data-target="dlp-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="dlp" value="no"
+                                    class="eden-yn-trigger" data-target="dlp-details"> No</label>
                         </div>
                     </div>
-                    <div class="conditional-field" id="mfa_details_sec" style="display:none;">
-                        <div class="form-grid cols-2">
-                            <div class="form-group"><label for="mfa_solution">MFA/SSO Solution</label><input type="text"
-                                    id="mfa_solution" name="mfa_solution" placeholder="e.g. Duo, Azure MFA"></div>
-                            <div class="form-group"><label>Company Data Only on Company Devices?</label>
-                                <div class="radio-group">
-                                    <label class="radio-label"><input type="radio" name="company_devices_only"
-                                            value="yes"> Yes</label>
-                                    <label class="radio-label"><input type="radio" name="company_devices_only"
-                                            value="no"> No</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="yn-row">
-                        <label class="yn-label"><i class="fas fa-eye-slash"></i> DLP (Data Leak Prevention)</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="dlp_enabled" value="yes"
-                                    class="eden-yn-trigger" data-target="dlp_details_sec"> Yes</label>
-                            <label class="radio-label"><input type="radio" name="dlp_enabled" value="no"
-                                    class="eden-yn-trigger" data-target="dlp_details_sec"> No</label>
-                        </div>
-                    </div>
-                    <div class="conditional-field" id="dlp_details_sec" style="display:none;">
-                        <div class="form-group"><label>Where is DLP Implemented?</label>
+                    <div class="conditional-field" id="dlp-details" style="display:none;">
+                        <div class="form-group">
+                            <label>Where is DLP Implemented?</label>
                             <div class="checkbox-group">
                                 <label class="checkbox-label"><input type="checkbox" name="dlp_where[]" value="Email">
                                     Email</label>
@@ -515,26 +273,30 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                         </div>
                     </div>
 
-                    <div class="form-grid cols-2" style="margin-top:10px;">
-                        <div class="yn-row">
-                            <label class="yn-label"><i class="fas fa-user-lock"></i> PIM/PAM — Admin Access</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="pim_pam" value="yes"> Yes</label>
-                                <label class="radio-label"><input type="radio" name="pim_pam" value="no"> No</label>
-                            </div>
-                        </div>
-                        <div class="yn-row">
-                            <label class="yn-label"><i class="fas fa-tags"></i> Data Classification</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="data_classification" value="yes"
-                                        class="eden-yn-trigger" data-target="data_class_sec"> Yes</label>
-                                <label class="radio-label"><input type="radio" name="data_classification" value="no"
-                                        class="eden-yn-trigger" data-target="data_class_sec"> No</label>
-                            </div>
+                    <!-- PIM/PAM -->
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-user-lock"></i> PIM/PAM — Admin Access</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="pim_pam" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="pim_pam" value="no"> No</label>
                         </div>
                     </div>
-                    <div class="conditional-field" id="data_class_sec" style="display:none;">
-                        <div class="form-group"><label>Classification Type</label>
+
+                    <!-- Data Classification -->
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-tags"></i> Data Classification?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="data_classification"
+                                    value="yes" class="eden-yn-trigger" data-target="classification-details">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="data_classification" value="no"
+                                    class="eden-yn-trigger" data-target="classification-details"> No</label>
+                        </div>
+                    </div>
+                    <div class="conditional-field" id="classification-details" style="display:none;">
+                        <div class="form-group">
+                            <label>Classification Type</label>
                             <div class="radio-group">
                                 <label class="radio-label"><input type="radio" name="classification_type"
                                         value="Automatic"> Automatic</label>
@@ -543,103 +305,206 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                             </div>
                         </div>
                     </div>
+
+                    <!-- ───── ENDPOINT SECURITY (NESTED INSIDE IAM) ───── -->
+                    <div class="subsection-label" style="margin-top:24px;">Endpoint Security</div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-laptop-medical"></i> Do you have an Endpoint
+                            Security Solution?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="has_endpoint_security"
+                                    value="yes" class="eden-yn-trigger" data-target="endpoint-sec-table"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="has_endpoint_security"
+                                    value="no" class="eden-yn-trigger" data-target="endpoint-sec-table"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="conditional-field" id="endpoint-sec-table" style="display:none;">
+                        <div class="security-table-wrapper">
+                            <table class="security-table">
+                                <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th style="width:140px;">Status</th>
+                                        <th>Remarks / Solution Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $sec_features = array(
+                                        'sec_antivirus' => 'Antivirus / Anti-malware',
+                                        'sec_endpoint_firewall' => 'Endpoint Firewall',
+                                        'sec_app_control' => 'Application Control',
+                                        'sec_device_control' => 'Device Control',
+                                        'sec_vuln_assessment' => 'Vulnerability Assessment',
+                                        'sec_patch_mgmt' => 'Patch Management',
+                                        'sec_siem' => 'SIEM Integration',
+                                        'sec_encryption' => 'Encryption',
+                                        'sec_edr_xdr' => 'EDR / XDR',
+                                        'sec_software_control' => 'Software Control',
+                                        'sec_inventory_tracking' => 'Inventory Tracking',
+                                    );
+                                    foreach ($sec_features as $key => $label):
+                                        ?>
+                                        <tr>
+                                            <td><?php echo esc_html($label); ?></td>
+                                            <td>
+                                                <div class="radio-group toggle-group">
+                                                    <label class="radio-label compact"><input type="radio"
+                                                            name="<?php echo $key; ?>" value="yes"> Yes</label>
+                                                    <label class="radio-label compact"><input type="radio"
+                                                            name="<?php echo $key; ?>" value="no"> No</label>
+                                                </div>
+                                            </td>
+                                            <td><input type="text" name="<?php echo $key; ?>_remarks"
+                                                    placeholder="Solution name / remarks"></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ─── CARD: Email & Collaboration ─── -->
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 2. IT OPERATIONS & TOOLS -->
+                <!-- ═══════════════════════════════════════════ -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="section-card-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
                         <div>
-                            <h3>Email &amp; Collaboration</h3>
+                            <h3>IT Operations & Tools</h3>
+                            <p>Tools used for day-to-day IT management</p>
+                        </div>
+                    </div>
+                    <div class="form-grid cols-2">
+                        <div class="form-group"><label>Encryption Tool</label><input type="text" name="encryption_tool"
+                                placeholder="e.g. BitLocker"></div>
+                        <div class="form-group"><label>Patch Management Solution</label><input type="text"
+                                name="patch_mgmt_solution" placeholder="e.g. WSUS, ManageEngine"></div>
+                        <div class="form-group"><label>Remote Support Tool</label><input type="text"
+                                name="remote_support_tool" placeholder="e.g. TeamViewer, AnyDesk"></div>
+                        <div class="form-group"><label>Asset Management System</label><input type="text"
+                                name="asset_mgmt_system" placeholder="e.g. ServiceNow"></div>
+                        <div class="form-group"><label>Log / SIEM System</label><input type="text" name="siem_system"
+                                placeholder="e.g. Splunk, Wazuh"></div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 3. EMAIL & COLLABORATION -->
+                <!-- ═══════════════════════════════════════════ -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <div class="section-card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                        <div>
+                            <h3>Email & Collaboration</h3>
                             <p>Email platform, security, and awareness training</p>
                         </div>
                     </div>
 
-                    <div class="form-group"><label>Email Platform</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label"><input type="checkbox" name="email_platform[]" value="M365">
-                                Microsoft 365</label>
-                            <label class="checkbox-label"><input type="checkbox" name="email_platform[]"
-                                    value="G-Suite"> G-Suite</label>
-                            <label class="checkbox-label"><input type="checkbox" name="email_platform[]" value="Other">
-                                Other</label>
-                        </div>
-                    </div>
                     <div class="form-grid cols-2">
-                        <div class="form-group"><label for="email_platform_other">Other Email Platform</label><input
-                                type="text" id="email_platform_other" name="email_platform_other"
-                                placeholder="e.g. Zoho Mail"></div>
-                        <div class="form-group"><label for="num_email_licenses">No. of Email Licenses</label><input
-                                type="number" id="num_email_licenses" name="num_email_licenses" min="0"
-                                placeholder="e.g. 50"></div>
-                    </div>
-                    <div class="form-grid cols-2">
-                        <div class="form-group"><label>Email Security Inbuilt (M365)?</label>
+                        <div class="form-group">
+                            <label>Email Platform</label>
                             <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="email_security_inbuilt"
-                                        value="yes"> Yes</label>
-                                <label class="radio-label"><input type="radio" name="email_security_inbuilt" value="no">
-                                    No</label>
+                                <label class="radio-label"><input type="radio" name="email_platform"
+                                        value="Microsoft 365" class="eden-yn-trigger" data-target="email-other">
+                                    Microsoft 365</label>
+                                <label class="radio-label"><input type="radio" name="email_platform" value="G-Suite"
+                                        class="eden-yn-trigger" data-target="email-other"> G-Suite</label>
+                                <label class="radio-label"><input type="radio" name="email_platform" value="Other"
+                                        class="eden-yn-trigger" data-target="email-other"> Other</label>
                             </div>
                         </div>
-                        <div class="form-group"><label for="email_security_other">Other Email Security
-                                Solution</label><input type="text" id="email_security_other" name="email_security_other"
-                                placeholder="e.g. Mimecast, Proofpoint"></div>
+                        <div class="form-group"><label>No. of Email Licenses</label><input type="number"
+                                name="num_email_users" min="0" placeholder="0"></div>
+                    </div>
+                    <div class="conditional-field" id="email-other" style="display:none;">
+                        <div class="form-group"><label>Other Email Platform Name</label><input type="text"
+                                name="email_platform_other" placeholder="e.g. Zoho Mail"></div>
                     </div>
 
-                    <div class="form-grid cols-3" style="margin-top:10px;">
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-database"></i> Email Backup</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio" name="email_backup"
-                                        value="yes"> Yes</label><label class="radio-label"><input type="radio"
-                                        name="email_backup" value="no"> No</label></div>
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-shield"></i> Email Security Inbuilt
+                            (M365)?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="email_sec_inbuilt" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="email_sec_inbuilt" value="no">
+                                No</label>
                         </div>
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-archive"></i> Email
-                                Archival</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio"
-                                        name="email_archival" value="yes"> Yes</label><label class="radio-label"><input
-                                        type="radio" name="email_archival" value="no"> No</label></div>
-                        </div>
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-lock"></i> Email Encryption</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio"
-                                        name="email_encryption" value="yes" class="eden-yn-trigger"
-                                        data-target="email_enc_sec"> Yes</label><label class="radio-label"><input
-                                        type="radio" name="email_encryption" value="no" class="eden-yn-trigger"
-                                        data-target="email_enc_sec"> No</label></div>
-                        </div>
-                    </div>
-                    <div class="conditional-field" id="email_enc_sec" style="display:none;">
-                        <div class="form-group"><label for="email_enc_solution">Encryption Solution</label><input
-                                type="text" id="email_enc_solution" name="email_enc_solution"
-                                placeholder="e.g. Virtru, OME"></div>
                     </div>
 
-                    <div class="form-grid cols-3" style="margin-top:10px;">
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-graduation-cap"></i> Security
-                                Training</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio"
-                                        name="security_awareness" value="yes"> Yes</label><label
-                                    class="radio-label"><input type="radio" name="security_awareness" value="no">
-                                    No</label></div>
+                    <div class="form-group"><label>Other Email Security Solution</label><input type="text"
+                            name="email_security_solution" placeholder="e.g. Proofpoint, Mimecast"></div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-cloud-arrow-up"></i> Email Backup?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="email_backup" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="email_backup" value="no">
+                                No</label>
                         </div>
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-fish"></i> Phishing
-                                Simulation</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio"
-                                        name="phishing_simulation" value="yes"> Yes</label><label
-                                    class="radio-label"><input type="radio" name="phishing_simulation" value="no">
-                                    No</label></div>
+                    </div>
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-box-archive"></i> Email Archival?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="email_archival" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="email_archival" value="no">
+                                No</label>
                         </div>
-                        <div class="yn-row"><label class="yn-label"><i class="fas fa-check-double"></i> DMARC</label>
-                            <div class="radio-group"><label class="radio-label"><input type="radio" name="dmarc"
-                                        value="yes"> Yes</label><label class="radio-label"><input type="radio"
-                                        name="dmarc" value="no"> No</label></div>
+                    </div>
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-lock"></i> Email Encryption?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="email_encryption" value="yes"
+                                    class="eden-yn-trigger" data-target="email-enc-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="email_encryption" value="no"
+                                    class="eden-yn-trigger" data-target="email-enc-details"> No</label>
+                        </div>
+                    </div>
+                    <div class="conditional-field" id="email-enc-details" style="display:none;">
+                        <div class="form-group"><label>Encryption Solution</label><input type="text"
+                                name="email_encryption_solution" placeholder="e.g. Virtru, PGP"></div>
+                    </div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-graduation-cap"></i> Security Awareness
+                            Training?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="security_awareness_training"
+                                    value="yes"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="security_awareness_training"
+                                    value="no"> No</label>
+                        </div>
+                    </div>
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-fish"></i> Phishing Simulation?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="phishing_sim" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="phishing_sim" value="no">
+                                No</label>
+                        </div>
+                    </div>
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-envelope-circle-check"></i> DMARC?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="dmarc" value="yes"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="dmarc" value="no"> No</label>
                         </div>
                     </div>
                 </div>
 
-                <!-- ─── CARD: SIEM / SOC ─── -->
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 4. SIEM / SOC -->
+                <!-- ═══════════════════════════════════════════ -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-radar"></i></div>
+                        <div class="section-card-icon"><i class="fa-solid fa-radar"></i></div>
                         <div>
                             <h3>SIEM / Security Operations Center (SOC)</h3>
                             <p>Monitoring and incident response capabilities</p>
@@ -647,95 +512,201 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                     </div>
 
                     <div class="yn-row">
-                        <label class="yn-label"><i class="fas fa-satellite-dish"></i> SIEM Solution Deployed?</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="siem_deployed" value="yes"
-                                    class="eden-yn-trigger" data-target="siem_details_sec"> Yes</label>
-                            <label class="radio-label"><input type="radio" name="siem_deployed" value="no"
-                                    class="eden-yn-trigger" data-target="siem_details_sec"> No</label>
+                        <label class="yn-label"><i class="fa-solid fa-magnifying-glass-chart"></i> SIEM Solution
+                            Deployed?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="siem_deployed" value="yes"
+                                    class="eden-yn-trigger" data-target="siem-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="siem_deployed" value="no"
+                                    class="eden-yn-trigger" data-target="siem-details"> No</label>
                         </div>
                     </div>
-                    <div class="conditional-field" id="siem_details_sec" style="display:none;">
-                        <div class="form-group"><label>SIEM Deployment</label>
+                    <div class="conditional-field" id="siem-details" style="display:none;">
+                        <div class="form-group">
+                            <label>SIEM Deployment</label>
                             <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="siem_type" value="On-Prem">
+                                <label class="radio-label"><input type="radio" name="siem_deployment" value="On-Prem">
                                     On-Prem</label>
-                                <label class="radio-label"><input type="radio" name="siem_type" value="Cloud">
+                                <label class="radio-label"><input type="radio" name="siem_deployment" value="Cloud">
                                     Cloud</label>
-                                <label class="radio-label"><input type="radio" name="siem_type" value="Hybrid">
+                                <label class="radio-label"><input type="radio" name="siem_deployment" value="Hybrid">
                                     Hybrid</label>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-grid cols-2" style="margin-top:10px;">
-                        <div class="form-group"><label>SOC Type</label>
+                    <!-- SOC 24/7 FIRST, then SOC Type conditional -->
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-clock"></i> SOC Monitoring 24/7?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="soc_247" value="yes"
+                                    class="eden-yn-trigger" data-target="soc-type-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="soc_247" value="no"
+                                    class="eden-yn-trigger" data-target="soc-type-details"> No</label>
+                        </div>
+                    </div>
+                    <div class="conditional-field" id="soc-type-details" style="display:none;">
+                        <div class="form-group">
+                            <label>SOC Type</label>
                             <div class="radio-group">
                                 <label class="radio-label"><input type="radio" name="soc_type" value="In-house">
                                     In-house</label>
                                 <label class="radio-label"><input type="radio" name="soc_type" value="Managed">
                                     Managed</label>
-                                <label class="radio-label"><input type="radio" name="soc_type" value="None">
-                                    None</label>
-                            </div>
-                        </div>
-                        <div class="yn-row" style="align-self:start;">
-                            <label class="yn-label"><i class="fas fa-clock"></i> SOC Monitoring 24/7?</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="soc_24x7" value="yes"> Yes</label>
-                                <label class="radio-label"><input type="radio" name="soc_24x7" value="no"> No</label>
+                                <label class="radio-label"><input type="radio" name="soc_type" value="Hybrid">
+                                    Hybrid</label>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ─── CARD: Backup & DR ─── -->
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 5. BACKUP & DISASTER RECOVERY -->
+                <!-- ═══════════════════════════════════════════ -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <div class="section-card-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                        <div class="section-card-icon"><i class="fa-solid fa-cloud-arrow-down"></i></div>
                         <div>
-                            <h3>Backup &amp; Disaster Recovery</h3>
+                            <h3>Backup & Disaster Recovery</h3>
                             <p>Data protection and recovery solutions</p>
                         </div>
                     </div>
                     <div class="form-grid cols-2">
-                        <div class="form-group"><label for="server_backup_solution">Server Backup Solution</label><input
-                                type="text" id="server_backup_solution" name="server_backup_solution"
-                                placeholder="e.g. Veeam, Acronis"></div>
-                        <div class="form-group"><label for="endpoint_backup_solution">Endpoint Backup
-                                Solution</label><input type="text" id="endpoint_backup_solution"
-                                name="endpoint_backup_solution" placeholder="e.g. CrashPlan, Druva"></div>
+                        <div class="form-group"><label>Server Backup Solution</label><input type="text"
+                                name="server_backup_solution" placeholder="e.g. Veeam, Acronis"></div>
+                        <div class="form-group"><label>Endpoint Backup Solution</label><input type="text"
+                                name="endpoint_backup_solution" placeholder="e.g. Druva, CrashPlan"></div>
+                    </div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-hard-drive"></i> NAS Backup?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="nas_backup" value="yes">
+                                Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="nas_backup" value="no">
+                                No</label>
+                        </div>
+                    </div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-users-rectangle"></i> M365 / G-Suite Collab
+                            Backup?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="m365_collab_backup"
+                                    value="yes"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="m365_collab_backup" value="no">
+                                No</label>
+                        </div>
                     </div>
                 </div>
 
-                <!-- ─── Consent ─── -->
-                <div class="form-consent">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="consent_checkbox" name="consent" value="yes">
-                        <span>I consent to Eden Infosol collecting and processing this data for IT assessment purposes.
-                            <a href="/privacy-policy" target="_blank">Privacy Policy</a></span>
-                    </label>
-                    <span class="field-error" id="consent-error"></span>
+                <!-- ═══════════════════════════════════════════ -->
+                <!-- 6. COMPLIANCE -->
+                <!-- ═══════════════════════════════════════════ -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <div class="section-card-icon"><i class="fa-solid fa-file-contract"></i></div>
+                        <div>
+                            <h3>Compliance & Standards</h3>
+                            <p>Regulatory and industry compliances followed</p>
+                        </div>
+                    </div>
+
+                    <div class="yn-row">
+                        <label class="yn-label"><i class="fa-solid fa-clipboard-check"></i> Does your organization
+                            follow any compliances?</label>
+                        <div class="radio-group toggle-group">
+                            <label class="radio-label compact"><input type="radio" name="has_compliance" value="yes"
+                                    class="eden-yn-trigger" data-target="compliance-details"> Yes</label>
+                            <label class="radio-label compact"><input type="radio" name="has_compliance" value="no"
+                                    class="eden-yn-trigger" data-target="compliance-details"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="conditional-field" id="compliance-details" style="display:none;">
+                        <div class="form-group">
+                            <label>Select all that apply</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]"
+                                        value="ISO 27001"> ISO 27001</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]"
+                                        value="SOC Type 1"> SOC Type 1</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]"
+                                        value="SOC Type 2"> SOC Type 2</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="GDPR">
+                                    GDPR</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="HIPAA">
+                                    HIPAA</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="CSCRF">
+                                    CSCRF</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="RBI">
+                                    RBI</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="SEBI">
+                                    SEBI</label>
+                                <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="DPDP">
+                                    DPDP</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Consent + Buttons (KEEP YOUR EXISTING ONES BELOW THIS) -->
+
+
 
                 <!-- ─── Actions ─── -->
                 <div class="form-actions">
-                    <button type="button" class="btn-prev"><i class="fas fa-arrow-left"></i> Previous</button>
+                    <button type="button" class="btn-prev"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                    <button type="button" class="btn-next">Review &amp; Submit <i
+                            class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div> <!-- end form-step data-step="3" -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- STEP 4: REVIEW & SUBMIT                     -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="form-step" data-step="4">
+                <div class="step-header">
+                    <h2><i class="fa-solid fa-clipboard-check"></i> Step 4: Review Your Information</h2>
+                    <p>Please review everything below. Click <strong>Edit</strong> on any section to make changes before
+                        submitting.</p>
+                </div>
+
+                <!-- Review Container — populated by JS -->
+                <div id="reviewContainer" class="review-container">
+                    <div class="review-loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Generating review...
+                    </div>
+                </div>
+
+                <!-- Consent — moved here from Step 3 -->
+                <div class="form-consent">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="consent_checkbox" name="consent">
+                        <span>I consent to Eden Infosol collecting and processing this data for IT assessment purposes.
+                            <a href="/privacy-policy" target="_blank">Privacy Policy</a></span>
+                    </label>
+                    <div class="field-error" id="consent-error"></div>
+                </div>
+
+                <!-- Final Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn-prev"><i class="fa-solid fa-arrow-left"></i> Back to Edit</button>
                     <button type="submit" class="btn-submit" id="submitBtn">
-                        <span class="btn-text"><i class="fas fa-paper-plane"></i> Submit Assessment</span>
-                        <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i>
+                        <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> Submit Assessment</span>
+                        <span class="btn-loading" style="display:none;"><i class="fa-solid fa-spinner fa-spin"></i>
                             Submitting...</span>
                     </button>
                 </div>
             </div>
-        </form>
+    </div>
+    </form>
 
-        <!-- Save Progress -->
-        <div class="save-progress-bar">
-            <button type="button" class="btn-save" id="saveProgressBtn"><i class="fas fa-floppy-disk"></i> Save
-                Progress</button>
-            <span class="save-status" id="saveStatus"></span>
-        </div>
+    <!-- Save Progress -->
+    <div class="save-progress-bar">
+        <button type="button" class="btn-save" id="saveProgressBtn"><i class="fas fa-floppy-disk"></i> Save
+            Progress</button>
+        <span class="save-status" id="saveStatus"></span>
+    </div>
 
     </div>
 </section>
@@ -842,12 +813,12 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 </div>
 <h4 class="sub-heading">Routers</h4>
 <div class="form-grid cols-1"><div class="form-group"><label>No. of Owned Routers</label>
-<input type="number" name="loc_{{IDX}}_num_owned_routers" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_router_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_router"></div></div>
+<input type="number" name="loc_{{IDX}}_num_owned_routers" data-label="Router" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_router_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_router"></div></div>
 <div class="dynamic-rows" id="loc_{{IDX}}_router_rows"></div>
 <div class="form-grid cols-1"><div class="form-group"><label>No. of ISP Provided Routers</label><input type="number" name="loc_{{IDX}}_num_isp_routers" min="0" placeholder="0"></div></div>
 <h4 class="sub-heading">Firewalls</h4>
 <div class="form-grid cols-1"><div class="form-group"><label>No. of Firewalls</label>
-<input type="number" name="loc_{{IDX}}_num_firewalls" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_fw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_fw"></div></div>
+<input type="number" name="loc_{{IDX}}_num_firewalls" data-label="Firewall" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_fw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_fw"></div></div>
 <div class="dynamic-rows" id="loc_{{IDX}}_fw_rows"></div>
 <div class="form-grid cols-3">
 <div class="form-group"><label>Firewall-based SD-WAN</label><div class="radio-group">
@@ -911,19 +882,43 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 <div class="form-group"><label>Windows VMs</label><input type="number" name="loc_{{IDX}}_vm_windows" min="0" placeholder="0"></div>
 <div class="form-group"><label>Linux VMs</label><input type="number" name="loc_{{IDX}}_vm_linux" min="0" placeholder="0"></div>
 </div>
-<div class="form-group"><label>SAN Storage</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_san" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_san_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_san" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_san_sec"> No</label>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_san_sec" style="display:none;">
-<div class="form-grid cols-2">
-<div class="form-group"><label>SAN Interface</label><div class="checkbox-group">
-<label class="checkbox-label"><input type="checkbox" name="loc_{{IDX}}_san_if[]" value="SAS"> SAS</label>
-<label class="checkbox-label"><input type="checkbox" name="loc_{{IDX}}_san_if[]" value="iSCSI"> iSCSI</label>
-<label class="checkbox-label"><input type="checkbox" name="loc_{{IDX}}_san_if[]" value="FC"> FC</label>
-</div></div>
-<div class="form-group"><label>SAN Make &amp; Model</label><input type="text" name="loc_{{IDX}}_san_makemodel" placeholder="e.g. Dell PowerVault"></div>
-</div></div>
+<!-- SAN Storage -->
+<div class="subsection-label">SAN Storage</div>
+<div class="yn-row">
+    <label class="yn-label"><i class="fa-solid fa-server"></i> Do you have SAN Storage?</label>
+    <div class="radio-group toggle-group">
+        <label class="radio-label compact">
+            <input type="radio" name="has_san_{{IDX}}" value="yes" class="eden-yn-trigger" data-target="san-details-{{IDX}}"> Yes
+        </label>
+        <label class="radio-label compact">
+            <input type="radio" name="has_san_{{IDX}}" value="no" class="eden-yn-trigger" data-target="san-details-{{IDX}}"> No
+        </label>
+    </div>
+</div>
+
+<div class="conditional-field" id="san-details-{{IDX}}" style="display:none;">
+    <div class="form-grid cols-3">
+        <div class="form-group">
+            <label>No. of Drives</label>
+            <input type="number" name="san_num_drives_{{IDX}}" min="0" placeholder="e.g. 12"
+                   class="eden-qty-trigger"
+                   data-container="san-drives-{{IDX}}"
+                   data-tpl="sandrive"
+                   data-prefix="san_drive_{{IDX}}">
+        </div>
+        <div class="form-group">
+            <label>Total Raw Capacity</label>
+            <input type="text" name="san_raw_capacity_{{IDX}}" placeholder="e.g. 100 TB">
+        </div>
+        <div class="form-group">
+            <label>Total Usable Capacity</label>
+            <input type="text" name="san_usable_capacity_{{IDX}}" placeholder="e.g. 80 TB">
+        </div>
+    </div>
+
+    <div class="subsection-label" style="margin-top:14px;">Drive Type (per drive)</div>
+    <div id="san-drives-{{IDX}}" class="dynamic-rows"></div>
+</div>
 <div class="form-group"><label>NAS Storage</label><div class="radio-group">
 <label class="radio-label"><input type="radio" name="loc_{{IDX}}_nas" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_nas_sec"> Yes</label>
 <label class="radio-label"><input type="radio" name="loc_{{IDX}}_nas" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_nas_sec"> No</label>
@@ -961,123 +956,278 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 </div></div>
 </div>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- POWER & ELECTRICAL                          -->
+<!-- ═══════════════════════════════════════════ -->
 <div class="toggle-section" id="loc_{{IDX}}_sec_power">
-<div class="form-divider"><span>Power &amp; Electrical Infrastructure</span></div>
-<div class="form-group"><label>Centralised UPS</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_ups_central" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_ups_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_ups_central" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_ups_sec"> No</label>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_ups_sec" style="display:none;">
-<div class="form-grid cols-4">
-<div class="form-group"><label>KVA</label><input type="text" name="loc_{{IDX}}_ups_kva" placeholder="e.g. 10 KVA"></div>
-<div class="form-group"><label>Backup Time</label><input type="text" name="loc_{{IDX}}_ups_backup" placeholder="e.g. 30 mins"></div>
-<div class="form-group"><label>Make</label><input type="text" name="loc_{{IDX}}_ups_make" placeholder="Make"></div>
-<div class="form-group"><label>Model</label><input type="text" name="loc_{{IDX}}_ups_model" placeholder="Model"></div>
-</div></div>
-</div>
+    <div class="form-divider"><span>Power &amp; Electrical Infrastructure</span></div>
 
+    <!-- UPS / Power Backup -->
+    <div class="subsection-label">UPS &amp; Power Backup</div>
+
+    <div class="yn-row">
+        <label class="yn-label"><i class="fa-solid fa-plug-circle-bolt"></i> Do you have UPS installed?</label>
+        <div class="radio-group toggle-group">
+            <label class="radio-label compact">
+                <input type="radio" name="has_ups_{{IDX}}" value="yes" class="eden-yn-trigger" data-target="ups-details-{{IDX}}"> Yes
+            </label>
+            <label class="radio-label compact">
+                <input type="radio" name="has_ups_{{IDX}}" value="no" class="eden-yn-trigger" data-target="ups-details-{{IDX}}"> No
+            </label>
+        </div>
+    </div>
+
+    <div class="conditional-field" id="ups-details-{{IDX}}" style="display:none;">
+        <div class="form-grid cols-3">
+            <div class="form-group">
+                <label>Quantity (No. of UPS Units)</label>
+                <input type="number" name="ups_quantity_{{IDX}}" min="0" placeholder="e.g. 2">
+            </div>
+            <div class="form-group">
+                <label>UPS Type</label>
+                <select name="ups_type_{{IDX}}">
+                    <option value="">Select</option>
+                    <option value="Online">Online</option>
+                    <option value="Line-Interactive">Line-Interactive</option>
+                    <option value="Offline">Offline / Standby</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>UPS Mode</label>
+                <select name="ups_mode_{{IDX}}">
+                    <option value="">Select</option>
+                    <option value="Single-Phase">Single-Phase</option>
+                    <option value="Three-Phase">Three-Phase</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Total UPS Capacity</label>
+                <input type="text" name="ups_capacity_{{IDX}}" placeholder="e.g. 10 KVA">
+            </div>
+            <div class="form-group">
+                <label>Backup Time</label>
+                <input type="text" name="ups_backup_time_{{IDX}}" placeholder="e.g. 30 minutes">
+            </div>
+            <div class="form-group">
+                <label>UPS Make / Model</label>
+                <input type="text" name="ups_make_model_{{IDX}}" placeholder="e.g. APC Smart-UPS 3000">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ↑↑↑ END POWER & ELECTRICAL ↑↑↑ -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PHYSICAL SECURITY & SAFETY                  -->
+<!-- ═══════════════════════════════════════════ -->
 <div class="toggle-section" id="loc_{{IDX}}_sec_security">
-<div class="form-divider"><span>Physical Security &amp; Safety</span></div>
-<h4 class="sub-heading">CCTV Surveillance</h4>
-<div class="form-grid cols-1"><div class="form-group"><label>NVR/DVR Quantity</label>
-<input type="number" name="loc_{{IDX}}_nvr_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_nvr_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_nvr"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_nvr_rows"></div>
-<div class="form-grid cols-4">
-<div class="form-group"><label>Storage Capacity</label><input type="text" name="loc_{{IDX}}_cctv_storage" placeholder="e.g. 4 TB"></div>
-<div class="form-group"><label>Retention Period</label><input type="text" name="loc_{{IDX}}_cctv_retention" placeholder="e.g. 30 days"></div>
-<div class="form-group"><label>IP Cameras</label><input type="number" name="loc_{{IDX}}_ip_cameras" min="0" placeholder="0"></div>
-<div class="form-group"><label>Analog Cameras</label><input type="number" name="loc_{{IDX}}_analog_cameras" min="0" placeholder="0"></div>
-</div>
-<h4 class="sub-heading">Biometric / Access Control</h4>
-<div class="form-grid cols-4">
-<div class="form-group"><label>Type</label><select name="loc_{{IDX}}_bio_type"><option value="">Select</option><option value="Standalone">Standalone</option><option value="Centralised">Centralised</option></select></div>
-<div class="form-group"><label>No. of Devices</label><input type="number" name="loc_{{IDX}}_bio_qty" min="0" placeholder="0"></div>
-<div class="form-group"><label>Make &amp; Model</label><input type="text" name="loc_{{IDX}}_bio_makemodel" placeholder="Make Model"></div>
-<div class="form-group"><label>Areas Covered</label><input type="text" name="loc_{{IDX}}_bio_areas" placeholder="e.g. Main entry, Server room"></div>
-</div>
-<div class="form-grid cols-2">
-<div class="form-group"><label>Fire Alarm System</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_fire_alarm" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_fire_alarm_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_fire_alarm" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_fire_alarm_sec"> No</label>
-</div></div>
-<div class="form-group"><label>Fire Extinguishers (Server Room)</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_fire_ext" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_fire_ext_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_fire_ext" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_fire_ext_sec"> No</label>
-</div></div>
-</div>
-<div class="conditional-field" id="loc_{{IDX}}_fire_alarm_sec" style="display:none;"><div class="form-grid cols-1"><div class="form-group"><label>Fire Alarm Make &amp; Model</label><input type="text" name="loc_{{IDX}}_fire_alarm_mm" placeholder="Make Model"></div></div></div>
-<div class="conditional-field" id="loc_{{IDX}}_fire_ext_sec" style="display:none;"><div class="form-grid cols-1"><div class="form-group"><label>Fire Extinguisher Make &amp; Model</label><input type="text" name="loc_{{IDX}}_fire_ext_mm" placeholder="Make Model"></div></div></div>
-</div>
+    <div class="form-divider"><span>Physical Security &amp; Safety</span></div>
 
+    <h4 class="sub-heading">CCTV Surveillance</h4>
+    <div class="form-grid cols-1">
+        <div class="form-group">
+            <label>NVR/DVR Quantity</label>
+            <input type="number" name="loc_{{IDX}}_nvr_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_nvr_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_nvr" data-label="NVR/DVR">
+        </div>
+    </div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_nvr_rows"></div>
+
+    <div class="form-grid cols-4">
+        <div class="form-group"><label>Storage Capacity</label><input type="text" name="loc_{{IDX}}_cctv_storage" placeholder="e.g. 4 TB"></div>
+        <div class="form-group"><label>Retention Period</label><input type="text" name="loc_{{IDX}}_cctv_retention" placeholder="e.g. 30 days"></div>
+        <div class="form-group"><label>IP Cameras</label><input type="number" name="loc_{{IDX}}_ip_cameras" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Analog Cameras</label><input type="number" name="loc_{{IDX}}_analog_cameras" min="0" placeholder="0"></div>
+    </div>
+
+    <h4 class="sub-heading">Biometric / Access Control</h4>
+    <div class="form-grid cols-4">
+        <div class="form-group">
+            <label>Type</label>
+            <select name="loc_{{IDX}}_bio_type">
+                <option value="">Select</option>
+                <option value="Standalone">Standalone</option>
+                <option value="Centralised">Centralised</option>
+            </select>
+        </div>
+        <div class="form-group"><label>No. of Devices</label><input type="number" name="loc_{{IDX}}_bio_qty" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Make &amp; Model</label><input type="text" name="loc_{{IDX}}_bio_makemodel" placeholder="Make Model"></div>
+        <div class="form-group"><label>Areas Covered</label><input type="text" name="loc_{{IDX}}_bio_areas" placeholder="e.g. Main entry, Server room"></div>
+    </div>
+
+    <!-- Fire Safety -->
+    <div class="subsection-label">Fire Safety</div>
+
+    <div class="yn-row">
+        <label class="yn-label"><i class="fa-solid fa-fire-flame-curved"></i> Fire Alarm System</label>
+        <div class="radio-group toggle-group">
+            <label class="radio-label compact"><input type="radio" name="fire_alarm_system_{{IDX}}" value="yes"> Yes</label>
+            <label class="radio-label compact"><input type="radio" name="fire_alarm_system_{{IDX}}" value="no"> No</label>
+        </div>
+    </div>
+    <div class="yn-row">
+    <label class="yn-label"><i class="fa-solid fa-fire-flame-curved"></i> Fire Alarm System Office</label>
+    <div class="radio-group toggle-group">
+        <label class="radio-label compact"><input type="radio" name="fire_alarm_system_office_{{IDX}}" value="yes"> Yes</label>
+        <label class="radio-label compact"><input type="radio" name="fire_alarm_system_office_{{IDX}}" value="no"> No</label>
+    </div>
+</div>
+    <div class="yn-row">
+        <label class="yn-label"><i class="fa-solid fa-fire-extinguisher"></i> Fire Extinguishers Present?</label>
+        <div class="radio-group toggle-group">
+            <label class="radio-label compact">
+                <input type="radio" name="has_extinguishers_{{IDX}}" value="yes" class="eden-yn-trigger" data-target="ext-details-{{IDX}}"> Yes
+            </label>
+            <label class="radio-label compact">
+                <input type="radio" name="has_extinguishers_{{IDX}}" value="no" class="eden-yn-trigger" data-target="ext-details-{{IDX}}"> No
+            </label>
+        </div>
+    </div>
+    
+
+    <div class="conditional-field" id="ext-details-{{IDX}}" style="display:none;">
+        <div class="form-grid cols-2">
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" name="ext_quantity_{{IDX}}" min="0" placeholder="e.g. 4"
+                       class="eden-qty-trigger"
+                       data-container="ext-rows-{{IDX}}"
+                       data-tpl="extinguisher"
+                       data-prefix="ext_{{IDX}}"
+                       data-label="Extinguisher">
+            </div>
+        </div>
+        <div class="subsection-label" style="margin-top:10px;">Make &amp; Model (per extinguisher)</div>
+        <div id="ext-rows-{{IDX}}" class="dynamic-rows"></div>
+    </div>
+</div>
+<!-- ↑↑↑ END PHYSICAL SECURITY & SAFETY ↑↑↑ -->
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- COMMUNICATION & COLLABORATION               -->
+<!-- ═══════════════════════════════════════════ -->
 <div class="toggle-section" id="loc_{{IDX}}_sec_comms">
-<div class="form-divider"><span>Communication &amp; Collaboration</span></div>
-<div class="form-grid cols-2">
-<div class="form-group"><label>EPABX</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_epabx" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_epabx_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_epabx" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_epabx_sec"> No</label>
-</div></div>
-<div class="form-group"><label>IP-PBX</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_ip_pbx" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_ip_pbx_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_ip_pbx" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_ip_pbx_sec"> No</label>
-</div></div>
-</div>
-<div class="conditional-field" id="loc_{{IDX}}_epabx_sec" style="display:none;"><div class="form-grid cols-2">
-<div class="form-group"><label>EPABX Make</label><input type="text" name="loc_{{IDX}}_epabx_make" placeholder="Make"></div>
-<div class="form-group"><label>EPABX Model</label><input type="text" name="loc_{{IDX}}_epabx_model" placeholder="Model"></div>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_ip_pbx_sec" style="display:none;"><div class="form-grid cols-2">
-<div class="form-group"><label>IP-PBX Make</label><input type="text" name="loc_{{IDX}}_ip_pbx_make" placeholder="Make"></div>
-<div class="form-group"><label>IP-PBX Model</label><input type="text" name="loc_{{IDX}}_ip_pbx_model" placeholder="Model"></div>
-</div></div>
-<h4 class="sub-heading">Phones</h4>
-<div class="form-grid cols-3">
-<div class="form-group"><label>Analog Phones Qty</label><input type="number" name="loc_{{IDX}}_analog_phones" min="0" placeholder="0"></div>
-<div class="form-group"><label>IP Phones Qty</label><input type="number" name="loc_{{IDX}}_ip_phones" min="0" placeholder="0"></div>
-<div class="form-group"><label>Soft Phones Qty</label><input type="number" name="loc_{{IDX}}_soft_phones" min="0" placeholder="0"></div>
-</div>
-<div class="form-group"><label>PA System</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_pa" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_pa_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_pa" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_pa_sec"> No</label>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_pa_sec" style="display:none;"><div class="form-grid cols-1"><div class="form-group"><label>PA Make &amp; Model</label><input type="text" name="loc_{{IDX}}_pa_mm" placeholder="Make Model"></div></div></div>
-<h4 class="sub-heading">Video Conferencing</h4>
-<div class="form-grid cols-1"><div class="form-group"><label>No. of Meeting Rooms (with VC)</label>
-<input type="number" name="loc_{{IDX}}_vc_rooms" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_vc_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_vc"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_vc_rows"></div>
-<h4 class="sub-heading">End User Computing</h4>
-<div class="form-grid cols-3">
-<div class="form-group"><label>Laptops</label>
-<input type="number" name="loc_{{IDX}}_laptops_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_laptops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_laptops"></div>
-<div class="form-group"><label>Desktops</label>
-<input type="number" name="loc_{{IDX}}_desktops_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_desktops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_desktops"></div>
-<div class="form-group"><label>Workstations</label>
-<input type="number" name="loc_{{IDX}}_workstations_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_workstations_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_workstations"></div>
-<div class="form-group"><label>Thin Clients</label>
-<input type="number" name="loc_{{IDX}}_thin_clients_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_thin_clients_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_thin_clients"></div>
-<div class="form-group"><label>Tablets</label>
-<input type="number" name="loc_{{IDX}}_tablets_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_tablets_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_tablets"></div>
-<div class="form-group"><label>Phones (Company-Owned)</label>
-<input type="number" name="loc_{{IDX}}_co_phones_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_co_phones_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_co_phones"></div>
-<div class="form-group"><label>Printers</label>
-<input type="number" name="loc_{{IDX}}_printers_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_printers_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_printers"></div>
-<div class="form-group"><label>Scanners</label>
-<input type="number" name="loc_{{IDX}}_scanners_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_scanners_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_scanners"></div>
-<div class="form-group"><label>Multifunction Devices</label>
-<input type="number" name="loc_{{IDX}}_mfp_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_mfp_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_mfp"></div>
-</div>
-<div class="dynamic-rows" id="loc_{{IDX}}_laptops_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_desktops_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_workstations_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_thin_clients_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_tablets_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_co_phones_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_printers_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_scanners_rows"></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_mfp_rows"></div>
-<div class="form-grid cols-1"><div class="form-group"><label>Headsets Qty</label><input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0"></div></div>
-</div>
+    <div class="form-divider"><span>Communication &amp; Collaboration</span></div>
 
+    <div class="form-grid cols-2">
+        <div class="form-group">
+            <label>EPABX</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="loc_{{IDX}}_epabx" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_epabx_sec"> Yes</label>
+                <label class="radio-label"><input type="radio" name="loc_{{IDX}}_epabx" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_epabx_sec"> No</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>IP-PBX</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="loc_{{IDX}}_ip_pbx" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_ip_pbx_sec"> Yes</label>
+                <label class="radio-label"><input type="radio" name="loc_{{IDX}}_ip_pbx" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_ip_pbx_sec"> No</label>
+            </div>
+        </div>
+    </div>
 
+    <div class="conditional-field" id="loc_{{IDX}}_epabx_sec" style="display:none;">
+        <div class="form-grid cols-2">
+            <div class="form-group"><label>EPABX Make</label><input type="text" name="loc_{{IDX}}_epabx_make" placeholder="Make"></div>
+            <div class="form-group"><label>EPABX Model</label><input type="text" name="loc_{{IDX}}_epabx_model" placeholder="Model"></div>
+        </div>
+    </div>
 
-</div><!-- end location-panel -->
+    <div class="conditional-field" id="loc_{{IDX}}_ip_pbx_sec" style="display:none;">
+        <div class="form-grid cols-2">
+            <div class="form-group"><label>IP-PBX Make</label><input type="text" name="loc_{{IDX}}_ip_pbx_make" placeholder="Make"></div>
+            <div class="form-group"><label>IP-PBX Model</label><input type="text" name="loc_{{IDX}}_ip_pbx_model" placeholder="Model"></div>
+        </div>
+    </div>
+
+    <h4 class="sub-heading">Phones</h4>
+    <div class="form-grid cols-3">
+        <div class="form-group"><label>Analog Phones Qty</label><input type="number" name="loc_{{IDX}}_analog_phones" min="0" placeholder="0"></div>
+        <div class="form-group"><label>IP Phones Qty</label><input type="number" name="loc_{{IDX}}_ip_phones" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Soft Phones Qty</label><input type="number" name="loc_{{IDX}}_soft_phones" min="0" placeholder="0"></div>
+    </div>
+
+    <div class="form-group">
+        <label>PA System</label>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="loc_{{IDX}}_pa" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_pa_sec"> Yes</label>
+            <label class="radio-label"><input type="radio" name="loc_{{IDX}}_pa" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_pa_sec"> No</label>
+        </div>
+    </div>
+
+    <div class="conditional-field" id="loc_{{IDX}}_pa_sec" style="display:none;">
+        <div class="form-grid cols-1">
+            <div class="form-group"><label>PA Make &amp; Model</label><input type="text" name="loc_{{IDX}}_pa_mm" placeholder="Make Model"></div>
+        </div>
+    </div>
+
+    <h4 class="sub-heading">Video Conferencing</h4>
+    <div class="form-grid cols-1">
+        <div class="form-group">
+            <label>No. of Meeting Rooms (with VC)</label>
+            <input type="number" name="loc_{{IDX}}_vc_rooms" data-label="Meeting Room" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_vc_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_vc">
+        </div>
+    </div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_vc_rows"></div>
+
+    <h4 class="sub-heading">End User Computing</h4>
+    <div class="form-grid cols-3">
+        <div class="form-group">
+            <label>Laptops</label>
+            <input type="number" name="loc_{{IDX}}_laptops_qty" data-label="Laptop" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_laptops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_laptops">
+        </div>
+        <div class="form-group">
+            <label>Desktops</label>
+            <input type="number" name="loc_{{IDX}}_desktops_qty" data-label="Desktop" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_desktops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_desktops">
+        </div>
+        <div class="form-group">
+            <label>Workstations</label>
+            <input type="number" name="loc_{{IDX}}_workstations_qty" data-label="Workstation" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_workstations_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_workstations">
+        </div>
+        <div class="form-group">
+            <label>Thin Clients</label>
+            <input type="number" name="loc_{{IDX}}_thin_clients_qty" data-label="Thin Client" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_thin_clients_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_thin_clients">
+        </div>
+        <div class="form-group">
+            <label>Tablets</label>
+            <input type="number" name="loc_{{IDX}}_tablets_qty" data-label="Tablet" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_tablets_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_tablets">
+        </div>
+        <div class="form-group">
+            <label>Phones (Company-Owned)</label>
+            <input type="number" name="loc_{{IDX}}_co_phones_qty" data-label="Phone" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_co_phones_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_co_phones">
+        </div>
+        <div class="form-group">
+            <label>Printers</label>
+            <input type="number" name="loc_{{IDX}}_printers_qty" data-label="Printer" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_printers_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_printers">
+        </div>
+        <div class="form-group">
+            <label>Scanners</label>
+            <input type="number" name="loc_{{IDX}}_scanners_qty" data-label="Scanner" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_scanners_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_scanners">
+        </div>
+        <div class="form-group">
+            <label>Multifunction Devices</label>
+            <input type="number" name="loc_{{IDX}}_mfp_qty" data-label="Multifunction Device" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_mfp_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_mfp">
+        </div>
+    </div>
+
+    <div class="dynamic-rows" id="loc_{{IDX}}_laptops_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_desktops_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_workstations_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_thin_clients_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_tablets_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_co_phones_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_printers_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_scanners_rows"></div>
+    <div class="dynamic-rows" id="loc_{{IDX}}_mfp_rows"></div>
+
+    <div class="form-grid cols-1">
+        <div class="form-group">
+            <label>Headsets Qty</label>
+            <input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0">
+        </div>
+    </div>
+</div>
+<!-- ↑↑↑ END COMMUNICATION & COLLABORATION ↑↑↑ -->
+ </div>
 </script><?php get_footer(); ?>
