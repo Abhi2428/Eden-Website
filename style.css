@@ -4180,20 +4180,39 @@ ol {
 }
 
 /* Toggle Section Animation */
+/* ═══════════════════════════════════════════════ */
+/* TOGGLE SECTIONS — NO HEIGHT CLIPPING            */
+/* ═══════════════════════════════════════════════ */
+
 .toggle-section {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+    display: none;
     margin-top: 0;
 }
 
 .toggle-section.open {
-    max-height: 3000px;
+    display: block;
+    max-height: none;
+    overflow: visible;
     opacity: 1;
     margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px solid var(--gray-200);
+    margin-bottom: 4px;
+    padding: 24px 28px 20px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.toggle-section.open::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius) 0 0 var(--radius);
 }
 
 /* ═══════════════════════════════════════════════ */
@@ -5862,4 +5881,308 @@ ol {
 .progress-step.active:hover .step-circle {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(211, 154, 6, 0.2);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* LOCATION COPY TOOLBAR                           */
+/* ═══════════════════════════════════════════════ */
+
+.location-copy-toolbar {
+    background: #fff8e1;
+    border: 1px solid rgba(211, 154, 6, 0.3);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.copy-toolbar-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.copy-toolbar-content>i {
+    color: var(--accent);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.copy-toolbar-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--navy);
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.copy-from-select {
+    padding: 8px 14px;
+    border: 1.5px solid var(--gray-300);
+    border-radius: 6px;
+    background: var(--white);
+    font-size: 0.88rem;
+    font-family: var(--font);
+    color: var(--text);
+    cursor: pointer;
+    min-width: 180px;
+    outline: none;
+}
+
+.copy-from-select:focus {
+    border-color: var(--accent);
+}
+
+.btn-copy-loc {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: var(--accent);
+    color: var(--navy);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-copy-loc:hover {
+    background: var(--accent-light);
+}
+
+.btn-copy-loc i {
+    font-size: 0.85rem;
+}
+
+.copy-toolbar-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding-left: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.copy-toolbar-hint i {
+    color: var(--accent);
+    font-size: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* APPLY TO ALL BUTTON (dynamic rows)              */
+/* ═══════════════════════════════════════════════ */
+
+.btn-apply-to-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--white);
+    color: var(--navy);
+    border: 1.5px dashed var(--accent);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s ease, border-style 0.2s ease;
+}
+
+.btn-apply-to-all:hover {
+    background: #fff8e1;
+    border-style: solid;
+}
+
+.btn-apply-to-all i {
+    color: var(--accent);
+    font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .copy-toolbar-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .copy-from-select,
+    .btn-copy-loc {
+        width: 100%;
+    }
+}
+
+/* ═══════════════════════════════════════════════ */
+/* MINIMIZE BUTTON                                 */
+/* ═══════════════════════════════════════════════ */
+
+.section-minimize-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    color: var(--navy);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+}
+
+.section-minimize-btn:hover {
+    background: var(--accent);
+    color: var(--white);
+    border-color: var(--accent);
+}
+
+/* ─── Position inside toggle-section (Step 2) ─── */
+.toggle-section.open>.section-minimize-btn {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    z-index: 5;
+}
+
+/* ─── Make section-card-header flex so button sits on the right ─── */
+.section-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.section-card-header>div:not(.section-card-icon) {
+    flex-grow: 1;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* COLLAPSED STATE — Step 2 toggle-sections        */
+/* ═══════════════════════════════════════════════ */
+
+.toggle-section.open.collapsed {
+    padding: 14px 28px;
+}
+
+.toggle-section.open.collapsed>*:not(.form-divider):not(.section-minimize-btn) {
+    display: none;
+}
+
+.toggle-section.open.collapsed>.form-divider {
+    margin: 0;
+}
+
+.toggle-section.open.collapsed>.form-divider::before,
+.toggle-section.open.collapsed>.form-divider::after {
+    display: none;
+}
+
+.toggle-section.open.collapsed>.form-divider span {
+    color: var(--navy);
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.toggle-section.open.collapsed>.section-minimize-btn {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* ═══════════════════════════════════════════════ */
+/* COLLAPSED STATE — Step 3 section-cards          */
+/* ═══════════════════════════════════════════════ */
+
+.section-card.collapsed {
+    padding-bottom: 0;
+}
+
+.section-card.collapsed>*:not(.section-card-header) {
+    display: none;
+}
+
+.section-card.collapsed .section-card-header {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════ */
+/* DYNAMIC ROWS — INTERNAL SCROLL FOR LONG LISTS   */
+/* ═══════════════════════════════════════════════ */
+
+.dynamic-rows {
+    /* When more than ~6 rows fit, show internal scroll */
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 12px 4px 4px;
+    margin-top: 8px;
+    border-radius: var(--radius-sm);
+    scroll-behavior: smooth;
+}
+
+/* Only apply scroll when there's actually content overflowing */
+.dynamic-rows:empty {
+    max-height: 0;
+    padding: 0;
+    margin-top: 0;
+}
+
+/* Add a subtle visual cue when scroll is present */
+.dynamic-rows:not(:empty) {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    padding: 12px;
+}
+
+/* ─── Custom scrollbar styling ─── */
+.dynamic-rows::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dynamic-rows::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 4px;
+}
+
+.dynamic-rows::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.dynamic-rows::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Firefox scrollbar */
+.dynamic-rows {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) var(--gray-100);
+}
+
+/* ─── Apply Row 1 button — sticky at bottom of scroll container ─── */
+.btn-apply-to-all {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    box-shadow: 0 -4px 12px rgba(255, 255, 255, 0.9);
+    margin-top: 12px;
+    width: calc(100% - 4px);
+    justify-content: center;
+    z-index: 2;
+}
+
+/* Mobile — smaller height to leave room for navigation */
+@media (max-width: 768px) {
+    .dynamic-rows {
+        max-height: 360px;
+    }
 }

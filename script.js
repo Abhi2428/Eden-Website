@@ -412,6 +412,135 @@ document.addEventListener('DOMContentLoaded', function () {
         var currentLocCount = 0;
 
         // ═══════════════════════════════════════════
+        // MINIMIZE / EXPAND SECTIONS (Step 2 + Step 3)
+        // ═══════════════════════════════════════════
+
+        function injectMinimizeButtons() {
+            // ─── Step 2: toggle-sections that are open ───
+            document.querySelectorAll('.toggle-section.open').forEach(function (sec) {
+                if (sec.querySelector('.section-minimize-btn')) return; // already has one
+                addMinimizeButton(sec, 'toggle');
+            });
+
+            // ─── Step 3: section-cards in Step 3 ───
+            document.querySelectorAll('.form-step[data-step="3"] .section-card').forEach(function (card) {
+                if (card.querySelector('.section-minimize-btn')) return;
+                addMinimizeButton(card, 'card');
+            });
+        }
+
+        function addMinimizeButton(container, type) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'section-minimize-btn';
+            btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+            btn.setAttribute('aria-label', 'Minimize section');
+            btn.setAttribute('title', 'Minimize');
+
+            if (type === 'card') {
+                // Inject into the section-card-header (right-aligned)
+                var header = container.querySelector('.section-card-header');
+                if (header) header.appendChild(btn);
+            } else {
+                // For toggle-section, append directly (CSS will position it)
+                container.appendChild(btn);
+            }
+        }
+
+        // Toggle collapsed state on click
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.section-minimize-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            var container = btn.closest('.toggle-section.open, .section-card');
+            if (!container) return;
+
+            container.classList.toggle('collapsed');
+            var icon = btn.querySelector('i');
+            if (container.classList.contains('collapsed')) {
+                icon.className = 'fa-solid fa-chevron-down';
+                btn.setAttribute('title', 'Expand');
+            } else {
+                icon.className = 'fa-solid fa-chevron-up';
+                btn.setAttribute('title', 'Minimize');
+            }
+        });
+
+        // Inject buttons on page load + whenever sections open
+        setTimeout(injectMinimizeButtons, 300);
+
+        // Also inject when a section toggle opens a new section
+        document.addEventListener('change', function (e) {
+            if (e.target.classList && e.target.classList.contains('section-toggle')) {
+                setTimeout(injectMinimizeButtons, 50);
+            }
+        });
+
+        // Inject when location tabs are built/switched
+        var originalBuildLocationTabs = buildLocationTabs;
+        buildLocationTabs = function (count) {
+            originalBuildLocationTabs(count);
+            setTimeout(injectMinimizeButtons, 100);
+        };
+
+        // Re-inject when step changes (so Step 3 cards get buttons on first visit)
+        var originalShowStepForMinimize = showStep;
+        showStep = function (step) {
+            originalShowStepForMinimize(step);
+            setTimeout(injectMinimizeButtons, 100);
+        };
+        // ═══════════════════════════════════════════
+        // APPLY ROW 1 TO ALL DYNAMIC ROWS (FIXED REGEX)
+        // ═══════════════════════════════════════════
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.btn-apply-to-all');
+            if (!btn) return;
+
+            var containerId = btn.getAttribute('data-container');
+            var container = document.getElementById(containerId);
+            if (!container) return;
+
+            var rows = container.querySelectorAll('.dynamic-row');
+            if (rows.length < 2) return;
+
+            var firstRow = rows[0];
+            var firstFields = {};
+
+            // ─── Extract suffix using GREEDY match (matches LAST _N_suffix in the name) ───
+            firstRow.querySelectorAll('input, select, textarea').forEach(function (f) {
+                if (!f.name) return;
+                // .* is greedy, so this matches the LAST _<digits>_<suffix> in the name
+                var match = f.name.match(/^.*_(\d+)_(.+)$/);
+                if (match) {
+                    firstFields[match[2]] = f.value;
+                }
+            });
+
+            // Sanity check
+            if (Object.keys(firstFields).length === 0) {
+                showSaveToast('Could not find any fields to copy from Row 1', 'error');
+                return;
+            }
+
+            // Apply suffix-matched values to rows 2+
+            var appliedCount = 0;
+            for (var i = 1; i < rows.length; i++) {
+                rows[i].querySelectorAll('input, select, textarea').forEach(function (f) {
+                    if (!f.name) return;
+                    var match = f.name.match(/^.*_(\d+)_(.+)$/);
+                    if (match && firstFields[match[2]] !== undefined) {
+                        f.value = firstFields[match[2]];
+                        appliedCount++;
+                    }
+                });
+            }
+
+            showSaveToast('Applied Row 1 values to ' + (rows.length - 1) + ' other rows', 'success');
+            autoSave();
+        });
+        // ═══════════════════════════════════════════
         // 1. LOCATION TAB GENERATOR
         // ═══════════════════════════════════════════
         function buildLocationTabs(count) {
@@ -465,6 +594,215 @@ document.addEventListener('DOMContentLoaded', function () {
             if (tab) tab.classList.add('active');
             if (panel) panel.style.display = '';
         }
+        // ═══════════════════════════════════════════
+        // LOCATION COPY — clone data from one location to another
+        // ═══════════════════════════════════════════
+        function updateCopyFromDropdown() {
+            var dropdown = document.getElementById('copyFromLocSelect');
+            var toolbar = document.getElementById('locationCopyToolbar');
+            if (!dropdown || !toolbar) return;
+
+            var locCount = parseInt(numLocInput.value) || 1;
+            var activeTab = locTabsBar.querySelector('.loc-tab.active');
+            var activeIdx = activeTab ? parseInt(activeTab.getAttribute('data-loc')) : 0;
+
+            // Find locations that have at least some data
+            var availableLocs = [];
+            for (var i = 0; i < locCount; i++) {
+                if (i === activeIdx) continue;
+                var panel = locContents.querySelector('.location-panel[data-loc="' + i + '"]');
+                if (!panel) continue;
+                var hasData = false;
+                panel.querySelectorAll('input, select, textarea').forEach(function (f) {
+                    if (f.type === 'checkbox' || f.type === 'radio') {
+                        if (f.checked) hasData = true;
+                    } else if (f.value && f.value.trim() !== '') {
+                        hasData = true;
+                    }
+                });
+                if (hasData) {
+                    var nameInput = panel.querySelector('[name="loc_' + i + '_name"]');
+                    var locName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Location ' + (i + 1);
+                    availableLocs.push({ idx: i, name: locName });
+                }
+            }
+
+            // Show/hide toolbar based on whether other filled locations exist
+            if (availableLocs.length === 0 || locCount < 2) {
+                toolbar.style.display = 'none';
+                return;
+            }
+            toolbar.style.display = '';
+
+            // Rebuild dropdown
+            dropdown.innerHTML = '<option value="">— Select a location —</option>';
+            availableLocs.forEach(function (loc) {
+                var opt = document.createElement('option');
+                opt.value = loc.idx;
+                opt.textContent = loc.name;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        function copyLocationData(sourceIdx, targetIdx) {
+            var sourcePanel = locContents.querySelector('.location-panel[data-loc="' + sourceIdx + '"]');
+            var targetPanel = locContents.querySelector('.location-panel[data-loc="' + targetIdx + '"]');
+            if (!sourcePanel || !targetPanel) return;
+
+
+            // ─── Step 0: Copy SECTION TOGGLES first (they have no name, matched by data-target) ───
+            sourcePanel.querySelectorAll('.section-toggle').forEach(function (srcToggle) {
+                var srcTarget = srcToggle.getAttribute('data-target');
+                if (!srcTarget) return;
+                // Swap the location index in data-target
+                var targetTarget = srcTarget.replace('loc_' + sourceIdx + '_', 'loc_' + targetIdx + '_');
+                var tgtToggle = targetPanel.querySelector('.section-toggle[data-target="' + targetTarget + '"]');
+                if (!tgtToggle) return;
+
+                tgtToggle.checked = srcToggle.checked;
+                var tgtSection = document.getElementById(targetTarget);
+                if (tgtSection) {
+                    if (srcToggle.checked) {
+                        tgtSection.classList.add('open');
+                    } else {
+                        tgtSection.classList.remove('open');
+                    }
+                }
+            });
+            // Step 1: Copy basic fields (text/number/select/textarea)
+            sourcePanel.querySelectorAll('input, select, textarea').forEach(function (sf) {
+                if (!sf.name) return;
+                // Skip location-name (we don't want to copy "Mumbai HQ" to a new location)
+                if (sf.name.indexOf('_name') > -1 && sf.name === 'loc_' + sourceIdx + '_name') return;
+
+                // Build target field name by swapping the location index
+                var targetName = sf.name.replace('loc_' + sourceIdx + '_', 'loc_' + targetIdx + '_').replace(/_(\d+)$/, function (m, n) {
+                    return n === String(sourceIdx) ? '_' + targetIdx : m;
+                });
+                // For fields with {{IDX}} suffix like has_san_0 → has_san_1
+                if (targetName === sf.name) {
+                    var idxMatch = sf.name.match(/_(\d+)(?:\b|$)/);
+                    if (idxMatch && parseInt(idxMatch[1]) === sourceIdx) {
+                        targetName = sf.name.replace(/_(\d+)(\b|$)/, '_' + targetIdx + '$2');
+                    }
+                }
+
+                var tf = targetPanel.querySelector('[name="' + targetName + '"]');
+                if (!tf) return;
+
+                if (sf.type === 'checkbox') {
+                    tf.checked = sf.checked;
+                    if (sf.checked) {
+                        if (tf.classList.contains('section-toggle')) {
+                            var sec = document.getElementById(tf.getAttribute('data-target'));
+                            if (sec) sec.classList.add('open');
+                        } else {
+                            tf.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                } else if (sf.type === 'radio') {
+                    if (sf.checked) {
+                        // Find matching radio in target group with same value
+                        var targetRadios = targetPanel.querySelectorAll('input[type="radio"][name="' + targetName + '"]');
+                        targetRadios.forEach(function (tr) {
+                            if (tr.value === sf.value) {
+                                tr.checked = true;
+                                tr.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        });
+                    }
+                } else {
+                    tf.value = sf.value;
+                    // Trigger qty inputs to regenerate dynamic rows
+                    if (tf.classList.contains('eden-qty-trigger') && tf.value && parseInt(tf.value) > 0) {
+                        tf.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
+
+            // Step 2: After dynamic rows are regenerated, copy their values too (timed pass)
+            setTimeout(function () { copyDynamicRowValues(sourcePanel, targetPanel, sourceIdx, targetIdx); }, 100);
+            setTimeout(function () { copyDynamicRowValues(sourcePanel, targetPanel, sourceIdx, targetIdx); }, 350);
+
+            // Step 3: Show success toast
+            showSaveToast('Data copied successfully — edit what\'s different', 'success');
+
+            // Step 4: Auto-save
+            setTimeout(autoSave, 600);
+        }
+
+        function copyDynamicRowValues(sourcePanel, targetPanel, sourceIdx, targetIdx) {
+            // Iterate over all source dynamic-rows containers
+            sourcePanel.querySelectorAll('.dynamic-rows').forEach(function (srcContainer) {
+                var srcId = srcContainer.id;
+                if (!srcId) return;
+                var targetId = srcId.replace('loc_' + sourceIdx + '_', 'loc_' + targetIdx + '_').replace(/_(\d+)/, function (m, n) {
+                    return n === String(sourceIdx) ? '_' + targetIdx : m;
+                });
+                var targetContainer = document.getElementById(targetId);
+                if (!targetContainer) return;
+
+                // Copy each input/select inside source rows to target rows by name swap
+                srcContainer.querySelectorAll('input, select, textarea').forEach(function (sf) {
+                    if (!sf.name) return;
+                    var targetName = sf.name.replace('loc_' + sourceIdx + '_', 'loc_' + targetIdx + '_').replace(/_(\d+)_/, function (m, n) {
+                        return n === String(sourceIdx) ? '_' + targetIdx + '_' : m;
+                    });
+                    // Handle SAN/extinguisher style: san_drive_0_1 → san_drive_1_1
+                    if (targetName === sf.name) {
+                        var m = sf.name.match(/_(\d+)_(\d+)$/);
+                        if (m && parseInt(m[1]) === sourceIdx) {
+                            targetName = sf.name.replace(/_(\d+)_(\d+)$/, '_' + targetIdx + '_$2');
+                        }
+                    }
+                    var tf = targetContainer.querySelector('[name="' + targetName + '"]');
+                    if (tf && tf.type !== 'radio' && tf.type !== 'checkbox') {
+                        tf.value = sf.value;
+                    }
+                });
+            });
+        }
+
+        // Bind the copy button
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#copyFromLocBtn')) {
+                var dropdown = document.getElementById('copyFromLocSelect');
+                var sourceIdx = parseInt(dropdown.value);
+                if (isNaN(sourceIdx)) {
+                    showSaveToast('Please select a location to copy from', 'error');
+                    return;
+                }
+                var activeTab = locTabsBar.querySelector('.loc-tab.active');
+                var targetIdx = activeTab ? parseInt(activeTab.getAttribute('data-loc')) : 0;
+
+                if (sourceIdx === targetIdx) {
+                    showSaveToast('Cannot copy a location into itself', 'error');
+                    return;
+                }
+
+                // Confirm modal
+                showEdenModal({
+                    title: 'Copy location data?',
+                    subtitle: 'This will overwrite the current location with data from the selected one.',
+                    bodyText: 'You\'ll be able to edit only the fields that are different. Continue?',
+                    cancelText: 'Cancel',
+                    confirmText: 'Yes, Copy Data',
+                    icon: 'fa-clone'
+                }).then(function (proceed) {
+                    if (proceed) copyLocationData(sourceIdx, targetIdx);
+                });
+            }
+        });
+
+        // Update dropdown when tab changes
+        var originalSwitchLocTab = switchLocTab;
+        switchLocTab = function (idx) {
+            originalSwitchLocTab(idx);
+            updateCopyFromDropdown();
+        };
+
+        // Initial dropdown update
+        setTimeout(updateCopyFromDropdown, 500);
 
         locTabsBar.addEventListener('click', function (e) {
             var tab = e.target.closest('.loc-tab');
@@ -478,6 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (val > 0 && val <= 20) buildLocationTabs(val);
             });
         }
+
 
         // ═══════════════════════════════════════════
         // 2. BIND HANDLERS FOR DYNAMIC PANELS
@@ -562,10 +901,29 @@ document.addEventListener('DOMContentLoaded', function () {
             var saved = {};
             container.querySelectorAll('input, select, textarea').forEach(function (f) {
                 if (f.name) saved[f.name] = f.value;
+                // Append "Apply Row 1 to all" button AFTER all rows are rendered
+                if (count >= 2) {
+                    var applyBtn = document.createElement('button');
+                    applyBtn.type = 'button';
+                    applyBtn.className = 'btn-apply-to-all';
+                    applyBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Apply Row 1 values to all ' + count + ' rows';
+                    applyBtn.setAttribute('data-container', containerId);
+                    container.appendChild(applyBtn);
+                }
             });
+
 
             container.innerHTML = '';
             if (count === 0) return;
+            // Add "Apply to all" button when count >= 2
+            if (count >= 2) {
+                var applyBtn = document.createElement('button');
+                applyBtn.type = 'button';
+                applyBtn.className = 'btn-apply-to-all';
+                applyBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Apply Row 1 values to all ' + count + ' rows';
+                applyBtn.setAttribute('data-container', containerId);
+                container.appendChild(applyBtn);
+            }
 
             for (var i = 1; i <= count; i++) {
                 var row = document.createElement('div');

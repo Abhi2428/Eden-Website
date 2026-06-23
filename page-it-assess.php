@@ -179,6 +179,24 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                     <p>Fill details for each location. Use tabs to switch between locations.</p>
                 </div>
 
+                <!-- Location Copy Toolbar -->
+                <div class="location-copy-toolbar" id="locationCopyToolbar" style="display:none;">
+                    <div class="copy-toolbar-content">
+                        <i class="fa-solid fa-copy"></i>
+                        <span class="copy-toolbar-text">Save time! Copy data from another location:</span>
+                        <select id="copyFromLocSelect" class="copy-from-select">
+                            <option value="">— Select a location —</option>
+                        </select>
+                        <button type="button" id="copyFromLocBtn" class="btn-copy-loc">
+                            <i class="fa-solid fa-clone"></i> Copy Data
+                        </button>
+                    </div>
+                    <div class="copy-toolbar-hint">
+                        <i class="fa-solid fa-circle-info"></i> This will copy all field values from the selected
+                        location into the current one. You can then edit only what's different.
+                    </div>
+                </div>
+
                 <!-- JS generates tab buttons here -->
                 <div class="location-tabs" id="locationTabs"></div>
                 <!-- JS generates location panels here from template -->
@@ -1209,6 +1227,12 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
             <label>Multifunction Devices</label>
             <input type="number" name="loc_{{IDX}}_mfp_qty" data-label="Multifunction Device" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_mfp_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_mfp">
         </div>
+         <div class="form-grid cols-1">
+        <div class="form-group">
+            <label>Headsets Qty</label>
+            <input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0">
+        </div>
+    </div>
     </div>
 
     <div class="dynamic-rows" id="loc_{{IDX}}_laptops_rows"></div>
@@ -1221,12 +1245,7 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
     <div class="dynamic-rows" id="loc_{{IDX}}_scanners_rows"></div>
     <div class="dynamic-rows" id="loc_{{IDX}}_mfp_rows"></div>
 
-    <div class="form-grid cols-1">
-        <div class="form-group">
-            <label>Headsets Qty</label>
-            <input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0">
-        </div>
-    </div>
+   
 </div>
 <!-- ↑↑↑ END COMMUNICATION & COLLABORATION ↑↑↑ -->
  </div>
