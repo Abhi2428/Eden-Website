@@ -8,6 +8,7 @@ $bytes_url = eden_get_page_url('eden-bytes', home_url('/eden-bytes/'));
 $about_url = eden_get_page_url('about', home_url('/about/'));
 $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
+$careers_url = eden_get_page_url('careers', home_url('/careers/'));
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -65,6 +66,8 @@ $assess_url = eden_get_page_url('assessment', home_url('/assessment/'));
                 </li>
                 <li><a href="<?php echo esc_url($bytes_url); ?>">EdenBytes</a></li>
                 <li><a href="<?php echo esc_url($about_url); ?>">About Us</a></li>
+                <li><a href="<?php echo esc_url($careers_url); ?>" class="nav-careers-link">Careers <span
+                            class="nav-hiring-badge">Hiring</span></a></li>
                 <li><a href="<?php echo esc_url($contact_url); ?>">Contact Us</a></li>
                 <li class="nav-cta"><a href="<?php echo esc_url($assess_url); ?>" class="btn btn-primary">Get Your
                         Assessment</a></li>

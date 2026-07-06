@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', function () {
         function injectHeroVideo() {
 
 
-            var themeUrl = heroWrap.querySelector('.hero-poster').src;
+            var posterImg = heroWrap.querySelector('.hero-poster');
+            var themeUrl = posterImg ? posterImg.src : '';
             var baseUrl = themeUrl.substring(0, themeUrl.lastIndexOf('/assets/')) + '/assets/videos/';
 
             var video = document.createElement('video');
@@ -45,11 +46,10 @@ document.addEventListener('DOMContentLoaded', function () {
             heroWrap.insertBefore(video, overlay);
 
             video.play().then(function () {
-                // Fade out poster once video is playing
-                var poster = heroWrap.querySelector('.hero-poster');
-                if (poster) poster.classList.add('hidden');
+                var posterEl = heroWrap.querySelector('.hero-poster-picture') || heroWrap.querySelector('.hero-poster');
+                if (posterEl) posterEl.classList.add('hidden');
             }).catch(function () {
-                // Autoplay blocked — poster stays, no problem
+                // Autoplay blocked — poster stays visible
             });
         }
 
@@ -1010,10 +1010,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!target) return;
 
             var show = false;
+
             if (el.type === 'checkbox') {
                 show = el.checked;
             } else if (el.type === 'radio') {
-                show = (el.value === 'yes' && el.checked);
+                // Find which radio in the same name group is currently checked
+                var checkedRadio = document.querySelector('input[type="radio"][name="' + el.name + '"]:checked');
+                if (!checkedRadio) {
+                    show = false;
+                } else {
+                    // Only consider checked radios that point to THIS target
+                    if (checkedRadio.getAttribute('data-target') === targetId) {
+                        // Use data-show-value if specified, otherwise default to "yes"
+                        var requiredValue = checkedRadio.getAttribute('data-show-value') || 'yes';
+                        show = (checkedRadio.value === requiredValue);
+                    } else {
+                        show = false;
+                    }
+                }
             }
 
             target.style.display = show ? '' : 'none';
@@ -1067,8 +1081,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function updateProgressBar(step) {
-            var percent = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
+            // Each step circle is centered within its (100/TOTAL_STEPS)% segment.
+            // Step N's circle center is at: ((2N - 1) / (2 * TOTAL_STEPS)) * 100%
+            // Example for 4 steps: Step 1 → 12.5%, Step 2 → 37.5%, Step 3 → 62.5%, Step 4 → 87.5%
+            var percent = ((2 * step - 1) / (2 * TOTAL_STEPS)) * 100;
             if (progressFill) progressFill.style.width = percent + '%';
+
             document.querySelectorAll('.progress-step').forEach(function (el) {
                 var s = parseInt(el.getAttribute('data-step'));
                 el.classList.remove('active', 'completed');
@@ -1658,6 +1676,19 @@ document.addEventListener('DOMContentLoaded', function () {
         function renderSecurityTable(container) {
             var table = container.querySelector('.security-table');
             if (!table) return '';
+
+            // ─── Detect if this is a DEVICE TABLE (Qty + OEM) vs SECURITY TABLE (Y/N + Remarks) ───
+            var isDeviceTable = table.classList.contains('eden-device-table');
+
+            if (isDeviceTable) {
+                return renderDeviceTable(table);
+            }
+
+            return renderEndpointSecurityTable(table);
+        }
+
+        // ─── Original endpoint security renderer (Feature / Status / Remarks) ───
+        function renderEndpointSecurityTable(table) {
             var rows = '';
             table.querySelectorAll('tbody tr').forEach(function (tr) {
                 var firstTd = tr.querySelector('td:first-child');
@@ -1675,6 +1706,41 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             if (!rows) return '';
             return '<div class="review-table-wrap"><table class="review-table"><thead><tr><th>Feature</th><th style="width:100px;">Status</th><th>Remarks</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+        }
+
+        // ─── NEW: Device table renderer (Device / Quantity / OEM) ───
+        function renderDeviceTable(table) {
+            var rows = '';
+            table.querySelectorAll('tbody tr').forEach(function (tr) {
+                var firstTd = tr.querySelector('td:first-child');
+                if (!firstTd) return;
+
+                // Clean device name (remove icon span text artifacts)
+                var clone = firstTd.cloneNode(true);
+                var icon = clone.querySelector('i');
+                if (icon) icon.remove();
+                var device = clone.textContent.trim();
+
+                // Find qty (number input) and OEM (text input)
+                var qtyInput = tr.querySelector('input[type="number"]');
+                var oemInput = tr.querySelector('input[type="text"]');
+
+                var qty = qtyInput ? (qtyInput.value || '').trim() : '';
+                var oem = oemInput ? (oemInput.value || '').trim() : '';
+
+                // Skip rows where neither qty nor OEM has data
+                if ((!qty || qty === '0') && !oem) return;
+
+                var qtyDisplay = (qty && qty !== '0')
+                    ? '<span class="review-qty-badge">' + qty + '</span>'
+                    : '<span class="review-empty">—</span>';
+                var oemDisplay = oem || '<span class="review-empty">—</span>';
+
+                rows += '<tr><td>' + device + '</td><td>' + qtyDisplay + '</td><td>' + oemDisplay + '</td></tr>';
+            });
+
+            if (!rows) return '';
+            return '<div class="review-table-wrap"><table class="review-table"><thead><tr><th>Device</th><th style="width:100px;">Quantity</th><th>OEM / Vendor</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
         }
 
         // ─── HELPERS ───
@@ -1953,64 +2019,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // 9. DISPLAY RESULTS & SCORE ANIMATION
         // ═══════════════════════════════════════════
         function displayResults(data) {
-            var percentage = data.percentage || 0;
-            var riskLevel = data.risk_level || 'Unknown';
-
-            setText('resultClientName', document.getElementById('client_name').value);
-            setText('riskScoreValue', data.risk_score);
-            setText('maxScoreValue', data.max_score);
-            setText('assessmentIdValue', '#' + data.id);
-
-            var badge = document.getElementById('scoreLevelBadge');
-            if (badge) badge.className = 'score-level level-' + riskLevel.toLowerCase();
-            setText('scoreLevelText', riskLevel + ' Risk');
-
-            var ringFill = document.getElementById('scoreRingFill');
-            if (ringFill) {
-                var circumference = 2 * Math.PI * 52;
-                ringFill.style.stroke = getRiskColor(riskLevel);
-                ringFill.style.strokeDasharray = circumference;
-                ringFill.style.strokeDashoffset = circumference;
-                setTimeout(function () {
-                    ringFill.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
-                    ringFill.style.strokeDashoffset = circumference - (percentage / 100) * circumference;
-                }, 200);
-            }
-            animateCounter('scorePercentage', 0, percentage, 1500);
-            var msgEl = document.getElementById('resultsMessage');
-            if (msgEl) msgEl.innerHTML = getRiskMessage(riskLevel);
+            setText('resultClientName', data.client_name || document.getElementById('client_name').value);
         }
 
         function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
 
-        function getRiskColor(level) {
-            var c = { low: '#00c853', medium: '#ffc107', high: '#ff9800', critical: '#ff5252' };
-            return c[level.toLowerCase()] || '#90a4ae';
-        }
 
-        function getRiskMessage(level) {
-            var m = {
-                low: '<div class="risk-msg risk-low"><h3><i class="fa-solid fa-shield-check"></i> Your IT infrastructure is in good shape!</h3><p>Strong security measures in place. Our team can help optimize further.</p></div>',
-                medium: '<div class="risk-msg risk-medium"><h3><i class="fa-solid fa-triangle-exclamation"></i> Some areas need attention</h3><p>Moderate gaps in your IT security posture. We recommend a consultation.</p></div>',
-                high: '<div class="risk-msg risk-high"><h3><i class="fa-solid fa-exclamation-circle"></i> Significant risks detected</h3><p>Notable security gaps found. Immediate action is recommended.</p></div>',
-                critical: '<div class="risk-msg risk-critical"><h3><i class="fa-solid fa-skull-crossbones"></i> Critical vulnerabilities found!</h3><p>Your IT environment is highly exposed. Urgent remediation required.</p></div>'
-            };
-            return m[level.toLowerCase()] || '';
-        }
 
-        function animateCounter(id, start, end, duration) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            var range = end - start;
-            var startTime = null;
-            function step(ts) {
-                if (!startTime) startTime = ts;
-                var progress = Math.min((ts - startTime) / duration, 1);
-                el.textContent = Math.floor(progress * range + start);
-                if (progress < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
+
 
         // ═══════════════════════════════════════════
         // 10. SAVE & RESTORE DRAFT (HARDENED)
@@ -2303,55 +2319,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // ═══════════════════════════════════════════
-        // 11. DOWNLOAD SUMMARY
-        // ═══════════════════════════════════════════
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('#downloadReportBtn')) {
-                var cn = (document.getElementById('resultClientName') || {}).textContent || 'Client';
-                var rl = (document.getElementById('scoreLevelText') || {}).textContent || 'N/A';
-                var rs = (document.getElementById('riskScoreValue') || {}).textContent || '0';
-                var ms = (document.getElementById('maxScoreValue') || {}).textContent || '0';
-                var pc = (document.getElementById('scorePercentage') || {}).textContent || '0';
-                var ai = (document.getElementById('assessmentIdValue') || {}).textContent || '#—';
-
-                var s = '';
-                s += '===============================================\n';
-                s += '  IT INFRASTRUCTURE & SECURITY ASSESSMENT\n';
-                s += '  Eden Infosol Pvt. Ltd.\n';
-                s += '===============================================\n\n';
-                s += '  Client:         ' + cn + '\n';
-                s += '  Assessment ID:  ' + ai + '\n';
-                s += '  Date:           ' + new Date().toLocaleDateString() + '\n\n';
-                s += '-----------------------------------------------\n';
-                s += '  RISK SUMMARY\n';
-                s += '-----------------------------------------------\n\n';
-                s += '  Risk Level:     ' + rl + '\n';
-                s += '  Risk Score:     ' + rs + ' / ' + ms + '\n';
-                s += '  Risk %:         ' + pc + '%\n\n';
-                s += '-----------------------------------------------\n';
-                s += '  NEXT STEPS\n';
-                s += '-----------------------------------------------\n\n';
-                s += '  1. Our team will review your assessment.\n';
-                s += '  2. A report will be sent within 24 hours.\n';
-                s += '  3. Book a free consultation to discuss findings.\n\n';
-                s += '  Email: management@edeninfosol.com\n';
-                s += '  Web:   https://edeninfosol.com\n\n';
-                s += '===============================================\n';
-                s += '  (c) ' + new Date().getFullYear() + ' Eden Infosol. All rights reserved.\n';
-                s += '===============================================\n';
-
-                var blob = new Blob([s], { type: 'text/plain' });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'IT_Assessment_' + cn.replace(/\s+/g, '_') + '.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        });
 
         // ═══════════════════════════════════════════
         // 12. KEYBOARD: Enter → Next Step
@@ -2374,5 +2341,74 @@ document.addEventListener('DOMContentLoaded', function () {
         tryRestoreDraft();
 
     } // end if (assessForm)
+    /* ============ CAREERS PAGE ============ */
+    window.openJobModal = function (id) {
+        var src = document.getElementById('job-data-' + id);
+        if (!src) return;
+        document.getElementById('jobModalBody').innerHTML = src.innerHTML;
+        document.getElementById('jobModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeJobModal = function () {
+        var m = document.getElementById('jobModal');
+        if (m) m.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+    window.openApplyForm = function (id, title) {
+        window.closeJobModal();
+        document.getElementById('applyJobId').value = id;
+        document.getElementById('applyJobTitle').textContent = title;
+        document.getElementById('applyModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeApplyForm = function () {
+        var m = document.getElementById('applyModal');
+        if (m) m.classList.remove('active');
+        document.body.style.overflow = '';
+    };
+
+    // Close on background click
+    document.addEventListener('click', function (e) {
+        if (e.target.classList && e.target.classList.contains('job-modal')) {
+            e.target.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Filters (NO nested DOMContentLoaded)
+    var jobSearch = document.getElementById('jobSearch');
+    if (jobSearch) {
+        var dept = document.getElementById('filterDept');
+        var type = document.getElementById('filterType');
+        var cards = document.querySelectorAll('.job-card');
+        var noRes = document.getElementById('noResults');
+
+        function filterJobs() {
+            var q = (jobSearch.value || '').toLowerCase().trim();
+            var d = dept ? dept.value : '';
+            var t = type ? type.value : '';
+            var visible = 0;
+
+            cards.forEach(function (card) {
+                // Build searchable text from data-search OR fallback to card's visible text
+                var searchSource = card.dataset.search || card.textContent || '';
+                searchSource = searchSource.toLowerCase();
+
+                var matchSearch = !q || searchSource.indexOf(q) !== -1;
+                var matchDept = !d || card.dataset.dept === d;
+                var matchType = !t || card.dataset.type === t;
+
+                var show = matchSearch && matchDept && matchType;
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            if (noRes) noRes.style.display = (visible === 0) ? 'block' : 'none';
+        }
+
+        jobSearch.addEventListener('input', filterJobs);
+        if (dept) dept.addEventListener('change', filterJobs);
+        if (type) type.addEventListener('change', filterJobs);
+    }
 
 });

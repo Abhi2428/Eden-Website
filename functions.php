@@ -616,16 +616,16 @@ add_action('init', 'eden_maybe_generate_sitemap');
 // =============================================
 function eden_resource_hints()
 {
-    // Preload hero poster image (fixes LCP)
     if (is_front_page()) {
-        $poster = get_template_directory_uri() . '/assets/images/hero-poster.jpg';
-        echo '<link rel="preload" as="image" href="' . esc_url($poster) . '">' . "\n";
+        $base = get_template_directory_uri() . '/assets/images/';
+        // Mobile WebP preload
+        echo '<link rel="preload" as="image" href="' . esc_url($base . 'hero-poster-mobile.webp') . '" type="image/webp" media="(max-width: 768px)" fetchpriority="high">' . "\n";
+        // Desktop WebP preload
+        echo '<link rel="preload" as="image" href="' . esc_url($base . 'hero-poster.webp') . '" type="image/webp" media="(min-width: 769px)" fetchpriority="high">' . "\n";
     }
-
-    // Preload main stylesheet
-    echo '<link rel="preload" as="style" href="' . esc_url(get_stylesheet_uri()) . '">' . "\n";
 }
 add_action('wp_head', 'eden_resource_hints', 0);
+
 
 
 // =============================================
@@ -666,105 +666,6 @@ function eden_maybe_create_assessment_table()
 add_action('init', 'eden_maybe_create_assessment_table');
 
 
-// =============================================
-// 14. RISK SCORING ENGINE
-// =============================================
-function eden_calculate_risk_score($data)
-{
-    $score = 0;
-    $max_score = 0;
-
-    // Endpoint Security features (11 items) — each "no" = 8 risk points
-    $security_features = array(
-        'sec_antivirus',
-        'sec_endpoint_firewall',
-        'sec_app_control',
-        'sec_device_control',
-        'sec_vuln_assessment',
-        'sec_patch_mgmt',
-        'sec_siem',
-        'sec_encryption',
-        'sec_edr_xdr',
-        'sec_software_control',
-        'sec_inventory_tracking',
-    );
-    foreach ($security_features as $feature) {
-        $max_score += 8;
-        $val = isset($data[$feature]) ? strtolower(trim($data[$feature])) : 'no';
-        if ($val !== 'yes') {
-            $score += 8;
-        }
-    }
-
-    // Backup & DR checks
-    $max_score += 6;
-    if (empty($data['server_backup_solution']))
-        $score += 6;
-
-    $max_score += 6;
-    if (empty($data['endpoint_backup_solution']))
-        $score += 6;
-
-    $max_score += 8;
-    $mfa = isset($data['mfa_sso']) ? strtolower(trim($data['mfa_sso'])) : 'no';
-    if ($mfa !== 'yes')
-        $score += 8;
-
-    // SSL certificate
-    $max_score += 6;
-    $ssl = isset($data['ssl_certificate']) ? strtolower(trim($data['ssl_certificate'])) : 'no';
-    if ($ssl !== 'yes')
-        $score += 6;
-
-    // Dedicated server room
-    $max_score += 4;
-    $server_room = isset($data['dedicated_server_room']) ? strtolower(trim($data['dedicated_server_room'])) : 'no';
-    if ($server_room !== 'yes')
-        $score += 4;
-
-    // Fire alarm
-    $max_score += 4;
-    $fire_alarm = isset($data['fire_alarm_system']) ? strtolower(trim($data['fire_alarm_system'])) : 'no';
-    if ($fire_alarm !== 'yes')
-        $score += 4;
-
-    // Inhouse IT support
-    $max_score += 4;
-    $it_support = isset($data['inhouse_it_support']) ? strtolower(trim($data['inhouse_it_support'])) : 'no';
-    if ($it_support !== 'yes')
-        $score += 4;
-
-    // Firewall
-    $max_score += 6;
-    if (empty($data['firewalls']))
-        $score += 6;
-
-    // Email security
-    $max_score += 5;
-    if (empty($data['email_security_solution']))
-        $score += 5;
-
-    // Determine risk level
-    $percentage = ($max_score > 0) ? round(($score / $max_score) * 100) : 0;
-
-    if ($percentage <= 25) {
-        $level = 'Low';
-    } elseif ($percentage <= 50) {
-        $level = 'Medium';
-    } elseif ($percentage <= 75) {
-        $level = 'High';
-    } else {
-        $level = 'Critical';
-    }
-
-    return array(
-        'score' => $score,
-        'max_score' => $max_score,
-        'percentage' => $percentage,
-        'level' => $level,
-    );
-}
-
 
 // =============================================
 // 15. HANDLE ASSESSMENT FORM (AJAX)
@@ -797,10 +698,7 @@ function eden_handle_assessment_form()
         wp_send_json_error(array('message' => 'Client Name and Email are required.'));
     }
 
-    // Calculate risk score
-    $risk = eden_calculate_risk_score($sanitized);
-
-    // Save to database
+    // Save to database (risk_score and risk_level kept as defaults for schema compatibility)
     global $wpdb;
     $table_name = $wpdb->prefix . 'eden_assessments';
     $inserted = $wpdb->insert($table_name, array(
@@ -808,8 +706,8 @@ function eden_handle_assessment_form()
         'contact_email' => $contact_email,
         'contact_phone' => $contact_phone,
         'form_data' => wp_json_encode($sanitized),
-        'risk_score' => $risk['score'],
-        'risk_level' => $risk['level'],
+        'risk_score' => 0,
+        'risk_level' => 'Pending Review',
         'submission_date' => current_time('mysql'),
         'status' => 'new',
     ));
@@ -817,50 +715,39 @@ function eden_handle_assessment_form()
     if ($inserted === false) {
         wp_send_json_error(array('message' => 'Database error. Please try again.'));
     }
-
     $assessment_id = $wpdb->insert_id;
 
     // Email to Eden team
     $to = 'abhishek.sheth@edeninfosol.com';
-    $subject = "New IT Assessment: {$client_name} — Risk: {$risk['level']}";
-
+    $subject = "New IT Assessment Submission: {$client_name}";
     $body = "<h2>New IT Infrastructure & Security Assessment</h2>";
     $body .= "<p><strong>Client:</strong> {$client_name}</p>";
     $body .= "<p><strong>Email:</strong> {$contact_email}</p>";
     $body .= "<p><strong>Phone:</strong> {$contact_phone}</p>";
     $body .= "<hr>";
-    $body .= "<p><strong>Risk Score:</strong> {$risk['score']} / {$risk['max_score']} ({$risk['percentage']}%)</p>";
-    $body .= "<p><strong>Risk Level:</strong> {$risk['level']}</p>";
-    $body .= "<hr>";
     $body .= "<p><strong>Employees:</strong> " . ($sanitized['num_employees'] ?? 'N/A') . "</p>";
     $body .= "<p><strong>Locations:</strong> " . ($sanitized['num_locations'] ?? 'N/A') . "</p>";
     $body .= "<p><strong>Assessment ID:</strong> #{$assessment_id}</p>";
     $body .= "<p>View full details in the WordPress admin panel.</p>";
-
     $headers = array('Content-Type: text/html; charset=UTF-8');
     wp_mail($to, $subject, $body, $headers);
 
-    // Confirmation email to client
+    // Confirmation email to client (no risk language)
     if (!empty($contact_email) && is_email($contact_email)) {
-        $client_subject = "Your IT Assessment Report — Eden Infosol";
+        $client_subject = "We've Received Your IT Assessment — Eden Infosol";
         $client_body = "<h2>Thank you, {$client_name}!</h2>";
-        $client_body .= "<p>We have received your IT Infrastructure & Security Assessment.</p>";
-        $client_body .= "<p><strong>Your Risk Level:</strong> {$risk['level']}</p>";
-        $client_body .= "<p><strong>Risk Score:</strong> {$risk['percentage']}%</p>";
-        $client_body .= "<p>Our team will review your assessment and reach out within 24 hours with a detailed report and recommendations.</p>";
+        $client_body .= "<p>We have received your IT Infrastructure & Security Assessment submission successfully.</p>";
+        $client_body .= "<p>Our specialists will carefully analyze your IT structure and reach out to you within <strong>24 hours</strong> with a detailed analysis and tailored recommendations.</p>";
+        $client_body .= "<p>If you have any questions in the meantime, feel free to reach us at <a href='mailto:management@edeninfosol.com'>management@edeninfosol.com</a>.</p>";
         $client_body .= "<br><p>Best regards,<br>Eden Infosol Team<br><a href='https://edeninfosol.com'>edeninfosol.com</a></p>";
-
         wp_mail($contact_email, $client_subject, $client_body, $headers);
     }
 
-    // Return success
+    // Return success — no risk fields
     wp_send_json_success(array(
         'message' => 'Assessment submitted successfully!',
         'id' => $assessment_id,
-        'risk_score' => $risk['score'],
-        'max_score' => $risk['max_score'],
-        'percentage' => $risk['percentage'],
-        'risk_level' => $risk['level'],
+        'client_name' => $client_name,
     ));
 }
 add_action('wp_ajax_eden_submit_assessment', 'eden_handle_assessment_form');
@@ -925,6 +812,7 @@ function eden_assessments_admin_page()
         }
 
         // Helper to render a section
+
         function eden_render_section($title, $icon, $fields, $data)
         {
             $has_data = false;
@@ -953,6 +841,383 @@ function eden_assessments_admin_page()
                 $i++;
             }
             echo '</table></div>';
+        }
+
+        // ─── Helper: Render per-location data ───
+        function eden_render_locations($data)
+        {
+            $loc_count = isset($data['num_locations']) ? intval($data['num_locations']) : (isset($data['_loc_count']) ? intval($data['_loc_count']) : 1);
+            if ($loc_count < 1)
+                $loc_count = 1;
+
+            for ($i = 0; $i < $loc_count; $i++) {
+                $loc_label = isset($data['loc_' . $i . '_name']) && !empty(trim($data['loc_' . $i . '_name']))
+                    ? esc_html(trim($data['loc_' . $i . '_name']))
+                    : 'Location ' . ($i + 1);
+
+                // Check if this location has ANY data
+                $has_any = false;
+                foreach ($data as $key => $val) {
+                    if (strpos($key, 'loc_' . $i . '_') === 0) {
+                        if (is_array($val) ? count($val) : trim((string) $val) !== '') {
+                            $has_any = true;
+                            break;
+                        }
+                    }
+                }
+                if (!$has_any)
+                    continue;
+
+                echo '<div style="margin-bottom:32px;border:1px solid #d39a06;border-radius:10px;overflow:hidden;background:#fff;">';
+                echo '<div style="background:linear-gradient(135deg, #122c55, #173663);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;">';
+                echo '<span class="dashicons dashicons-location" style="color:#d39a06;font-size:24px;width:24px;height:24px;"></span>';
+                echo '<h2 style="margin:0;color:#fff;font-size:18px;font-weight:700;">' . $loc_label . '</h2>';
+                echo '</div>';
+                echo '<div style="padding:24px;">';
+
+                // ─── Basic Info ───
+                eden_render_loc_section('Basic Information', 'dashicons-info', array(
+                    'name' => 'Location Name',
+                    'users' => 'No. of Users',
+                    'work_setup' => 'Work Setup',
+                ), $data, $i);
+
+                // ─── Connectivity ───
+                eden_render_loc_section('Connectivity & WAN', 'dashicons-admin-site-alt3', array(
+                    'num_internet' => 'Internet Connections',
+                    'num_p2p' => 'P2P Leased Lines',
+                    'num_leased' => 'Leased Lines',
+                ), $data, $i);
+
+                // ─── Internet dynamic rows ───
+                eden_render_dynamic_rows('Internet Connection Details', array(
+                    'isp' => 'ISP',
+                    'bw' => 'Bandwidth',
+                    'type' => 'Type'
+                ), $data, $i, 'internet');
+
+                // ─── P2P dynamic rows ───
+                eden_render_dynamic_rows('P2P Line Details', array(
+                    'point_a' => 'Point A',
+                    'point_b' => 'Point B',
+                    'bw' => 'Bandwidth'
+                ), $data, $i, 'p2p');
+
+                // ─── Leased Line rows ───
+                eden_render_dynamic_rows('Leased Line Details', array(
+                    'bw' => 'Bandwidth',
+                    'details' => 'Details',
+                    'sp_router' => 'SP Router'
+                ), $data, $i, 'leased');
+
+                // ─── Network Devices Table ───
+                eden_render_device_table('Routers & Firewalls', array(
+                    'num_owned_routers' => array('Owned Routers', 'owned_routers_oem'),
+                    'num_isp_routers' => array('ISP-Provided Routers', 'isp_routers_oem'),
+                    'num_firewalls' => array('Firewalls', 'firewalls_oem'),
+                ), $data, $i);
+
+                // ─── Network Features ───
+                eden_render_loc_section('Network Features', 'dashicons-networking', array(
+                    'sd_wan' => 'Firewall-based SD-WAN',
+                    's2s_vpn' => 'Site-to-Site VPN',
+                    'p2s_vpn' => 'Point-to-Site VPN',
+                ), $data, $i);
+
+                // ─── Switches Table ───
+                eden_render_device_table('Network Switches', array(
+                    'core_sw_qty' => array('Core Switches (L3)', 'core_sw_oem'),
+                    'dist_sw_qty' => array('Distribution Switches', 'dist_sw_oem'),
+                    'access_sw_qty' => array('Access Layer Switches', 'access_sw_oem'),
+                ), $data, $i);
+
+                // ─── WiFi APs Table ───
+                eden_render_device_table('WiFi / Access Points', array(
+                    'standalone_ap_qty' => array('Standalone AP', 'standalone_ap_oem'),
+                    'controller_ap_qty' => array('Controller-Based AP', 'controller_ap_oem'),
+                ), $data, $i);
+
+                // ─── Server Room / Racks ───
+                eden_render_loc_section('Server Room', 'dashicons-cloud-saved', array(
+                    'server_room' => 'Server Room Present',
+                    'num_racks' => 'No. of Racks',
+                ), $data, $i);
+
+                // ─── Servers ───
+                eden_render_loc_section('Servers & Virtualization', 'dashicons-cloud-saved', array(
+                    'has_phys_nonvirt' => 'Physical Servers (Non-Virt)',
+                    'phys_nonvirt_qty' => 'Non-Virt Quantity',
+                    'has_phys_virt' => 'Physical Servers (Virt)',
+                    'phys_virt_qty' => 'Virt Quantity',
+                    'hypervisor' => 'Hypervisor',
+                    'vm_windows' => 'Windows VMs',
+                    'vm_linux' => 'Linux VMs',
+                ), $data, $i);
+
+                // ─── Storage (SAN/NAS/HCI/KVM/Serial) — note: SAN fields use a different naming pattern ───
+                $san_qty = isset($data['san_num_drives_' . $i]) ? trim($data['san_num_drives_' . $i]) : '';
+                $san_raw = isset($data['san_raw_capacity_' . $i]) ? trim($data['san_raw_capacity_' . $i]) : '';
+                $san_usable = isset($data['san_usable_capacity_' . $i]) ? trim($data['san_usable_capacity_' . $i]) : '';
+                $has_san = isset($data['has_san_' . $i]) ? $data['has_san_' . $i] : '';
+
+                if ($has_san || $san_qty || $san_raw || $san_usable) {
+                    echo '<div style="margin-bottom:24px;">';
+                    echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+                    echo '<span class="dashicons dashicons-database" style="margin-right:8px;color:#d39a06;"></span>SAN Storage</h3>';
+                    echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+                    if ($has_san)
+                        eden_print_row('Has SAN', $has_san, 0);
+                    if ($san_qty)
+                        eden_print_row('No. of Drives', $san_qty, 1);
+                    if ($san_raw)
+                        eden_print_row('Total Raw Capacity', $san_raw, 2);
+                    if ($san_usable)
+                        eden_print_row('Total Usable Capacity', $san_usable, 3);
+                    echo '</table></div>';
+                }
+
+                eden_render_loc_section('NAS / HCI', 'dashicons-database', array(
+                    'nas' => 'NAS Storage',
+                    'nas_makemodel' => 'NAS Make & Model',
+                    'hci' => 'HCI',
+                    'hci_solution' => 'HCI Solution',
+                ), $data, $i);
+
+                // ─── Power & UPS ───
+                $has_ups = isset($data['has_ups_' . $i]) ? $data['has_ups_' . $i] : '';
+                $ups_qty = isset($data['ups_quantity_' . $i]) ? $data['ups_quantity_' . $i] : '';
+                if ($has_ups || $ups_qty) {
+                    echo '<div style="margin-bottom:24px;">';
+                    echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+                    echo '<span class="dashicons dashicons-superhero" style="margin-right:8px;color:#d39a06;"></span>UPS & Power Backup</h3>';
+                    echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+                    $j = 0;
+                    foreach (array(
+                        'has_ups_' => 'Has UPS',
+                        'ups_quantity_' => 'Quantity',
+                        'ups_type_' => 'UPS Type',
+                        'ups_mode_' => 'UPS Mode',
+                        'ups_capacity_' => 'Total Capacity',
+                        'ups_backup_time_' => 'Backup Time',
+                        'ups_make_model_' => 'Make / Model',
+                    ) as $key_prefix => $label) {
+                        $val = isset($data[$key_prefix . $i]) ? trim($data[$key_prefix . $i]) : '';
+                        if ($val !== '')
+                            eden_print_row($label, $val, $j++);
+                    }
+                    echo '</table></div>';
+                }
+
+                // ─── Fire Safety ───
+                $fire_alarm = isset($data['fire_alarm_system_' . $i]) ? $data['fire_alarm_system_' . $i] : '';
+                $has_ext = isset($data['has_extinguishers_' . $i]) ? $data['has_extinguishers_' . $i] : '';
+                $ext_qty = isset($data['ext_quantity_' . $i]) ? $data['ext_quantity_' . $i] : '';
+                if ($fire_alarm || $has_ext || $ext_qty) {
+                    echo '<div style="margin-bottom:24px;">';
+                    echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+                    echo '<span class="dashicons dashicons-warning" style="margin-right:8px;color:#d39a06;"></span>Fire Safety</h3>';
+                    echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+                    $j = 0;
+                    if ($fire_alarm)
+                        eden_print_row('Fire Alarm System', $fire_alarm, $j++);
+                    if ($has_ext)
+                        eden_print_row('Fire Extinguishers Present', $has_ext, $j++);
+                    if ($ext_qty)
+                        eden_print_row('Extinguisher Quantity', $ext_qty, $j++);
+                    echo '</table></div>';
+                }
+
+                // ─── CCTV Table ───
+                eden_render_device_table('CCTV Surveillance', array(
+                    'nvr_qty' => array('NVR / DVR Units', 'nvr_oem'),
+                    'ip_cameras' => array('IP Cameras', 'ip_cameras_oem'),
+                    'analog_cameras' => array('Analog Cameras', 'analog_cameras_oem'),
+                ), $data, $i);
+
+                eden_render_loc_section('CCTV Storage', 'dashicons-camera', array(
+                    'cctv_storage' => 'Storage Capacity',
+                    'cctv_retention' => 'Retention Period',
+                ), $data, $i);
+
+                // ─── Biometric ───
+                eden_render_loc_section('Biometric / Access Control', 'dashicons-id', array(
+                    'bio_type' => 'Type',
+                    'bio_qty' => 'No. of Devices',
+                    'bio_makemodel' => 'Make & Model',
+                    'bio_areas' => 'Areas Covered',
+                ), $data, $i);
+
+                // ─── Telephony ───
+                eden_render_loc_section('Telephony (EPABX / IP-PBX)', 'dashicons-phone', array(
+                    'epabx' => 'EPABX',
+                    'epabx_make' => 'EPABX Make',
+                    'epabx_model' => 'EPABX Model',
+                    'ip_pbx' => 'IP-PBX',
+                    'ip_pbx_make' => 'IP-PBX Make',
+                    'ip_pbx_model' => 'IP-PBX Model',
+                    'pa' => 'PA System',
+                    'pa_mm' => 'PA Make & Model',
+                ), $data, $i);
+
+                // ─── Phones Table ───
+                eden_render_device_table('Phones', array(
+                    'analog_phones' => array('Analog Phones', 'analog_phones_oem'),
+                    'ip_phones' => array('IP Phones', 'ip_phones_oem'),
+                    'soft_phones' => array('Soft Phones', 'soft_phones_oem'),
+                ), $data, $i);
+
+                // ─── Video Conferencing ───
+                eden_render_loc_section('Video Conferencing', 'dashicons-video-alt2', array(
+                    'vc_rooms' => 'No. of VC-Enabled Meeting Rooms',
+                ), $data, $i);
+
+                // ─── End-User Computing Table ───
+                eden_render_device_table('End-User Computing', array(
+                    'laptops_qty' => array('Laptops', 'laptops_oem'),
+                    'desktops_qty' => array('Desktops', 'desktops_oem'),
+                    'workstations_qty' => array('Workstations', 'workstations_oem'),
+                    'thin_clients_qty' => array('Thin Clients', 'thin_clients_oem'),
+                    'tablets_qty' => array('Tablets', 'tablets_oem'),
+                    'co_phones_qty' => array('Phones (Company-Owned)', 'co_phones_oem'),
+                    'printers_qty' => array('Printers', 'printers_oem'),
+                    'scanners_qty' => array('Scanners', 'scanners_oem'),
+                    'mfp_qty' => array('Multifunction Devices', 'mfp_oem'),
+                    'headsets_qty' => array('Headsets', 'headsets_oem'),
+                ), $data, $i);
+
+                echo '</div></div>';
+            }
+        }
+
+        // ─── Helper: Render a per-location key/value section ───
+        function eden_render_loc_section($title, $icon, $fields, $data, $loc_idx)
+        {
+            $has_data = false;
+            foreach ($fields as $key => $label) {
+                $full_key = 'loc_' . $loc_idx . '_' . $key;
+                if (isset($data[$full_key]) && trim((string) $data[$full_key]) !== '') {
+                    $has_data = true;
+                    break;
+                }
+            }
+            if (!$has_data)
+                return;
+
+            echo '<div style="margin-bottom:24px;">';
+            echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+            echo '<span class="dashicons ' . $icon . '" style="margin-right:8px;color:#d39a06;"></span>' . $title . '</h3>';
+            echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+            $i = 0;
+            foreach ($fields as $key => $label) {
+                $full_key = 'loc_' . $loc_idx . '_' . $key;
+                $val = isset($data[$full_key]) ? trim((string) $data[$full_key]) : '';
+                if ($val === '')
+                    continue;
+                eden_print_row($label, $val, $i);
+                $i++;
+            }
+            echo '</table></div>';
+        }
+
+        // ─── Helper: Print a single key/value row ───
+        function eden_print_row($label, $val, $i)
+        {
+            $bg = ($i % 2 === 0) ? '#fff' : '#fafafa';
+            echo '<tr style="background:' . $bg . ';">';
+            echo '<td style="width:35%;padding:10px 14px;font-weight:600;color:#333;border-bottom:1px solid #eee;">' . esc_html($label) . '</td>';
+            echo '<td style="padding:10px 14px;color:#555;border-bottom:1px solid #eee;">' . esc_html($val) . '</td>';
+            echo '</tr>';
+        }
+
+        // ─── Helper: Render device table (Device | Qty | OEM) ───
+        function eden_render_device_table($title, $fields, $data, $loc_idx)
+        {
+            $has_data = false;
+            foreach ($fields as $qty_key => $info) {
+                $full_qty = 'loc_' . $loc_idx . '_' . $qty_key;
+                if (isset($data[$full_qty]) && trim((string) $data[$full_qty]) !== '' && intval($data[$full_qty]) > 0) {
+                    $has_data = true;
+                    break;
+                }
+            }
+            if (!$has_data)
+                return;
+
+            echo '<div style="margin-bottom:24px;">';
+            echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+            echo '<span class="dashicons dashicons-grid-view" style="margin-right:8px;color:#d39a06;"></span>' . $title . '</h3>';
+            echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+            echo '<thead><tr style="background:#122c55;color:#fff;">';
+            echo '<th style="padding:10px 14px;width:40%;">Device</th>';
+            echo '<th style="padding:10px 14px;width:120px;">Quantity</th>';
+            echo '<th style="padding:10px 14px;">OEM / Vendor</th>';
+            echo '</tr></thead><tbody>';
+
+            $i = 0;
+            foreach ($fields as $qty_key => $info) {
+                $label = $info[0];
+                $oem_key = $info[1];
+                $full_qty = 'loc_' . $loc_idx . '_' . $qty_key;
+                $full_oem = 'loc_' . $loc_idx . '_' . $oem_key;
+                $qty = isset($data[$full_qty]) ? trim((string) $data[$full_qty]) : '';
+                $oem = isset($data[$full_oem]) ? trim((string) $data[$full_oem]) : '';
+                if (($qty === '' || $qty === '0') && $oem === '')
+                    continue;
+                $bg = ($i % 2 === 0) ? '#fff' : '#fafafa';
+                $qty_display = ($qty !== '' && $qty !== '0')
+                    ? '<span style="display:inline-block;background:#122c55;color:#fff;padding:3px 12px;border-radius:20px;font-weight:700;font-size:13px;">' . esc_html($qty) . '</span>'
+                    : '<span style="color:#999;">—</span>';
+                $oem_display = $oem !== '' ? esc_html($oem) : '<span style="color:#999;">—</span>';
+                echo '<tr style="background:' . $bg . ';">';
+                echo '<td style="padding:10px 14px;font-weight:600;border-bottom:1px solid #eee;">' . esc_html($label) . '</td>';
+                echo '<td style="padding:10px 14px;border-bottom:1px solid #eee;">' . $qty_display . '</td>';
+                echo '<td style="padding:10px 14px;border-bottom:1px solid #eee;color:#555;">' . $oem_display . '</td>';
+                echo '</tr>';
+                $i++;
+            }
+            echo '</tbody></table></div>';
+        }
+
+        // ─── Helper: Render dynamic rows (Internet/P2P/Leased) ───
+        function eden_render_dynamic_rows($title, $col_keys, $data, $loc_idx, $prefix)
+        {
+            $rows_html = '';
+            $row_idx = 1;
+            while ($row_idx <= 50) {
+                $has_data = false;
+                foreach ($col_keys as $col_key => $col_label) {
+                    $full_key = 'loc_' . $loc_idx . '_' . $prefix . '_' . $row_idx . '_' . $col_key;
+                    if (isset($data[$full_key]) && trim((string) $data[$full_key]) !== '') {
+                        $has_data = true;
+                        break;
+                    }
+                }
+                if (!$has_data)
+                    break;
+
+                $cells = '';
+                foreach ($col_keys as $col_key => $col_label) {
+                    $full_key = 'loc_' . $loc_idx . '_' . $prefix . '_' . $row_idx . '_' . $col_key;
+                    $val = isset($data[$full_key]) ? trim((string) $data[$full_key]) : '';
+                    $cells .= '<td style="padding:10px 14px;border-bottom:1px solid #eee;">' . esc_html($val !== '' ? $val : '—') . '</td>';
+                }
+                $bg = ($row_idx % 2 === 1) ? '#fff' : '#fafafa';
+                $rows_html .= '<tr style="background:' . $bg . ';"><td style="padding:10px 14px;font-weight:600;border-bottom:1px solid #eee;">#' . $row_idx . '</td>' . $cells . '</tr>';
+                $row_idx++;
+            }
+            if (!$rows_html)
+                return;
+
+            echo '<div style="margin-bottom:24px;">';
+            echo '<h3 style="font-size:15px;color:#122c55;margin:0 0 12px;padding:10px 14px;background:#f0f0f1;border-left:4px solid #d39a06;border-radius:4px;">';
+            echo '<span class="dashicons dashicons-list-view" style="margin-right:8px;color:#d39a06;"></span>' . $title . '</h3>';
+            echo '<table class="widefat fixed" style="border:1px solid #e0e0e0;">';
+            echo '<thead><tr style="background:#122c55;color:#fff;">';
+            echo '<th style="padding:10px 14px;width:60px;">#</th>';
+            foreach ($col_keys as $col_label) {
+                echo '<th style="padding:10px 14px;">' . esc_html($col_label) . '</th>';
+            }
+            echo '</tr></thead><tbody>' . $rows_html . '</tbody></table></div>';
         }
 
         // ─── Render Detail Page ───
@@ -1016,15 +1281,8 @@ function eden_assessments_admin_page()
             'num_it_support_staff' => 'IT Support Staff',
         ), $data);
 
-        eden_render_section('Primary Location', 'dashicons-location', array(
-            'location_name' => 'Location Name',
-            'num_users_location' => 'Users in Location',
-            'work_setup' => 'Work Setup',
-            'dedicated_server_room' => 'Dedicated Server Room',
-            'num_racks' => 'No. of Racks',
-            'num_patch_panels' => 'No. of Patch Panels',
-            'num_pdus_per_rack' => 'PDUs per Rack',
-        ), $data);
+        // ─── Render all locations dynamically ───
+        eden_render_locations($data);
 
         eden_render_section('Internet & ISP', 'dashicons-admin-site-alt3', array(
             'isp_names' => 'ISP Name(s)',
@@ -1206,8 +1464,10 @@ function eden_assessments_admin_page()
         eden_render_section('SIEM / SOC', 'dashicons-shield-alt', array(
             'siem_deployed' => 'SIEM Solution Deployed',
             'siem_deployment' => 'SIEM Deployment',
+            'siem_oem' => 'SIEM OEM Name',
             'soc_247' => 'SOC Monitoring 24/7',
             'soc_type' => 'SOC Type',
+            'soc_oem' => 'SOC OEM Name',
         ), $data);
 
         eden_render_section('Compliance & Standards', 'dashicons-awards', array(
@@ -1271,5 +1531,173 @@ function eden_assessments_admin_page()
         echo '<p style="margin-top:15px;color:#666;">Showing ' . count($results) . ' of ' . $total . ' total assessments.</p>';
 
     }
+
+
     echo '</div>';
+
+
 }
+
+
+
+/* ============================
+CAREERS — Job Post Type
+============================ */
+function eden_register_jobs_cpt()
+{
+    register_post_type('jobs', array(
+        'labels' => array(
+            'name' => 'Jobs',
+            'singular_name' => 'Job',
+            'add_new_item' => 'Add New Job',
+            'edit_item' => 'Edit Job',
+        ),
+        'public' => true,
+        'show_in_menu' => true,
+        'menu_icon' => 'dashicons-businessperson',
+        'supports' => array('title', 'editor'),
+        'has_archive' => false,
+        'publicly_queryable' => false, // we use modal, not single page
+        'rewrite' => false,
+    ));
+}
+add_action('init', 'eden_register_jobs_cpt');
+
+/* ============================
+   CAREERS — Custom Meta Boxes
+============================ */
+function eden_add_job_meta_boxes()
+{
+    add_meta_box(
+        'eden_job_details',
+        'Job Details',
+        'eden_job_meta_box_html',
+        'jobs',
+        'normal',
+        'high'
+    );
+}
+add_action('add_meta_boxes', 'eden_add_job_meta_boxes');
+
+function eden_job_meta_box_html($post)
+{
+    $location = get_post_meta($post->ID, '_job_location', true);
+    $experience = get_post_meta($post->ID, '_job_experience', true);
+    $type = get_post_meta($post->ID, '_job_type', true);
+    $department = get_post_meta($post->ID, '_job_department', true);
+    $apply_email = get_post_meta($post->ID, '_job_apply_email', true);
+    $openings = get_post_meta($post->ID, '_job_openings', true);
+
+    wp_nonce_field('eden_job_save', 'eden_job_nonce');
+    ?>
+    <style>
+        .eden-job-fields label {
+            display: block;
+            font-weight: 600;
+            margin: 12px 0 4px;
+        }
+
+        .eden-job-fields input,
+        .eden-job-fields select {
+            width: 100%;
+            padding: 8px;
+        }
+    </style>
+    <div class="eden-job-fields">
+        <label>Location</label>
+        <input type="text" name="job_location" value="<?php echo esc_attr($location); ?>" placeholder="e.g. Mumbai, India">
+
+        <label>Experience</label>
+        <input type="text" name="job_experience" value="<?php echo esc_attr($experience); ?>" placeholder="e.g. 2-4 years">
+
+        <label>Job Type</label>
+        <select name="job_type">
+            <?php
+            $types = array('Full-time', 'Part-time', 'Internship', 'Contract');
+            foreach ($types as $t) {
+                $sel = ($type === $t) ? 'selected' : '';
+                echo "<option $sel>$t</option>";
+            }
+            ?>
+        </select>
+
+        <label>Department</label>
+        <select name="job_department">
+            <?php
+            $depts = array('Cybersecurity', 'Infrastructure', 'Cloud', 'Sales', 'Operations', 'Support', 'Other');
+            foreach ($depts as $d) {
+                $sel = ($department === $d) ? 'selected' : '';
+                echo "<option $sel>$d</option>";
+            }
+            ?>
+        </select>
+        <label>Number of Openings</label>
+        <input type="number" name="job_openings" value="<?php echo esc_attr($openings ?: 1); ?>" min="1"
+            placeholder="e.g. 3">
+
+        <label>Apply Email (where applications get sent)</label>
+        <input type="email" name="job_apply_email" value="<?php echo esc_attr($apply_email); ?>"
+            placeholder="hr@edeninfosol.com">
+    </div>
+    <?php
+}
+
+function eden_save_job_meta($post_id)
+{
+    if (!isset($_POST['eden_job_nonce']) || !wp_verify_nonce($_POST['eden_job_nonce'], 'eden_job_save'))
+        return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
+        return;
+    if (!current_user_can('edit_post', $post_id))
+        return;
+
+    $fields = array('job_location', 'job_experience', 'job_type', 'job_department', 'job_apply_email', 'job_openings');
+    foreach ($fields as $f) {
+        if (isset($_POST[$f])) {
+            update_post_meta($post_id, '_' . $f, sanitize_text_field($_POST[$f]));
+        }
+    }
+}
+add_action('save_post_jobs', 'eden_save_job_meta');
+
+/* ============================
+   CAREERS — Handle Apply Form
+============================ */
+function eden_handle_job_application()
+{
+    if (!isset($_POST['eden_apply_nonce']) || !wp_verify_nonce($_POST['eden_apply_nonce'], 'eden_apply'))
+        return;
+
+    $job_id = intval($_POST['job_id']);
+    $name = sanitize_text_field($_POST['applicant_name']);
+    $email = sanitize_email($_POST['applicant_email']);
+    $phone = sanitize_text_field($_POST['applicant_phone']);
+    $message = sanitize_textarea_field($_POST['applicant_message']);
+
+    $job_title = get_the_title($job_id);
+    $hr_email = get_post_meta($job_id, '_job_apply_email', true);
+    if (!$hr_email)
+        $hr_email = get_option('admin_email');
+
+    // Handle resume upload
+    $attachments = array();
+    if (!empty($_FILES['applicant_resume']['name'])) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        $upload = wp_handle_upload($_FILES['applicant_resume'], array('test_form' => false));
+        if (!isset($upload['error']) && isset($upload['file'])) {
+            $attachments[] = $upload['file'];
+        }
+    }
+
+    $subject = "New Application: $job_title - $name";
+    $body = "New job application received\n\n";
+    $body .= "Job: $job_title\n";
+    $body .= "Name: $name\nEmail: $email\nPhone: $phone\n\nMessage:\n$message";
+
+    wp_mail($hr_email, $subject, $body, array(), $attachments);
+
+    wp_safe_redirect(add_query_arg('applied', '1', wp_get_referer()));
+    exit;
+}
+add_action('admin_post_nopriv_eden_apply_job', 'eden_handle_job_application');
+add_action('admin_post_eden_apply_job', 'eden_handle_job_application');

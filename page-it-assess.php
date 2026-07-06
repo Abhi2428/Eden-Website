@@ -325,63 +325,53 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                     </div>
 
                     <!-- ───── ENDPOINT SECURITY (NESTED INSIDE IAM) ───── -->
+                    <!-- ───── ENDPOINT SECURITY (NESTED INSIDE IAM) ───── -->
                     <div class="subsection-label" style="margin-top:24px;">Endpoint Security</div>
 
-                    <div class="yn-row">
-                        <label class="yn-label"><i class="fa-solid fa-laptop-medical"></i> Do you have an Endpoint
-                            Security Solution?</label>
-                        <div class="radio-group toggle-group">
-                            <label class="radio-label compact"><input type="radio" name="has_endpoint_security"
-                                    value="yes" class="eden-yn-trigger" data-target="endpoint-sec-table"> Yes</label>
-                            <label class="radio-label compact"><input type="radio" name="has_endpoint_security"
-                                    value="no" class="eden-yn-trigger" data-target="endpoint-sec-table"> No</label>
-                        </div>
-                    </div>
-
-                    <div class="conditional-field" id="endpoint-sec-table" style="display:none;">
-                        <div class="security-table-wrapper">
-                            <table class="security-table">
-                                <thead>
+                    <div class="security-table-wrapper">
+                        <table class="security-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th style="width:140px;">Status</th>
+                                    <th>Remarks / Solution Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $sec_features = array(
+                                    'sec_antivirus' => 'Antivirus / Anti-malware',
+                                    'sec_endpoint_firewall' => 'Endpoint Firewall',
+                                    'sec_app_control' => 'Application Control',
+                                    'sec_device_control' => 'Device Control',
+                                    'sec_vuln_assessment' => 'Vulnerability Assessment',
+                                    'sec_patch_mgmt' => 'Patch Management',
+                                    'sec_siem' => 'SIEM Integration',
+                                    'sec_encryption' => 'Encryption',
+                                    'sec_edr_xdr' => 'EDR / XDR',
+                                    'sec_software_control' => 'Software Control',
+                                    'sec_inventory_tracking' => 'Inventory Tracking',
+                                );
+                                foreach ($sec_features as $key => $label):
+                                    ?>
                                     <tr>
-                                        <th>Feature</th>
-                                        <th style="width:140px;">Status</th>
-                                        <th>Remarks / Solution Name</th>
+                                        <td>
+                                            <?php echo esc_html($label); ?>
+                                        </td>
+                                        <td>
+                                            <div class="radio-group toggle-group">
+                                                <label class="radio-label compact"><input type="radio"
+                                                        name="<?php echo $key; ?>" value="yes"> Yes</label>
+                                                <label class="radio-label compact"><input type="radio"
+                                                        name="<?php echo $key; ?>" value="no"> No</label>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" name="<?php echo $key; ?>_remarks"
+                                                placeholder="Solution name / remarks"></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $sec_features = array(
-                                        'sec_antivirus' => 'Antivirus / Anti-malware',
-                                        'sec_endpoint_firewall' => 'Endpoint Firewall',
-                                        'sec_app_control' => 'Application Control',
-                                        'sec_device_control' => 'Device Control',
-                                        'sec_vuln_assessment' => 'Vulnerability Assessment',
-                                        'sec_patch_mgmt' => 'Patch Management',
-                                        'sec_siem' => 'SIEM Integration',
-                                        'sec_encryption' => 'Encryption',
-                                        'sec_edr_xdr' => 'EDR / XDR',
-                                        'sec_software_control' => 'Software Control',
-                                        'sec_inventory_tracking' => 'Inventory Tracking',
-                                    );
-                                    foreach ($sec_features as $key => $label):
-                                        ?>
-                                        <tr>
-                                            <td><?php echo esc_html($label); ?></td>
-                                            <td>
-                                                <div class="radio-group toggle-group">
-                                                    <label class="radio-label compact"><input type="radio"
-                                                            name="<?php echo $key; ?>" value="yes"> Yes</label>
-                                                    <label class="radio-label compact"><input type="radio"
-                                                            name="<?php echo $key; ?>" value="no"> No</label>
-                                                </div>
-                                            </td>
-                                            <td><input type="text" name="<?php echo $key; ?>_remarks"
-                                                    placeholder="Solution name / remarks"></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -411,7 +401,7 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                 </div>
 
                 <!-- ═══════════════════════════════════════════ -->
-                <!-- 3. EMAIL & COLLABORATION -->
+                <!-- 3. EMAIL & COLLABORATION                    -->
                 <!-- ═══════════════════════════════════════════ -->
                 <div class="section-card">
                     <div class="section-card-header">
@@ -422,41 +412,59 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                         </div>
                     </div>
 
+                    <!-- Email Platform + Licenses -->
                     <div class="form-grid cols-2">
                         <div class="form-group">
-                            <label>Email Platform</label>
+                            <label>Email & Collab Platform</label>
                             <div class="radio-group">
                                 <label class="radio-label"><input type="radio" name="email_platform"
-                                        value="Microsoft 365" class="eden-yn-trigger" data-target="email-other">
-                                    Microsoft 365</label>
+                                        value="Microsoft 365" class="eden-yn-trigger" data-target="email-other"
+                                        data-show-value="Other"> Microsoft 365</label>
                                 <label class="radio-label"><input type="radio" name="email_platform" value="G-Suite"
-                                        class="eden-yn-trigger" data-target="email-other"> G-Suite</label>
+                                        class="eden-yn-trigger" data-target="email-other" data-show-value="Other">
+                                    G-Suite</label>
                                 <label class="radio-label"><input type="radio" name="email_platform" value="Other"
-                                        class="eden-yn-trigger" data-target="email-other"> Other</label>
+                                        class="eden-yn-trigger" data-target="email-other" data-show-value="Other">
+                                    Other</label>
                             </div>
                         </div>
-                        <div class="form-group"><label>No. of Email Licenses</label><input type="number"
-                                name="num_email_users" min="0" placeholder="0"></div>
-                    </div>
-                    <div class="conditional-field" id="email-other" style="display:none;">
-                        <div class="form-group"><label>Other Email Platform Name</label><input type="text"
-                                name="email_platform_other" placeholder="e.g. Zoho Mail"></div>
+                        <div class="form-group">
+                            <label>No. of Email Licenses</label>
+                            <input type="number" name="num_email_users" min="0" placeholder="0">
+                        </div>
                     </div>
 
+                    <div class="conditional-field" id="email-other" style="display:none;">
+                        <div class="form-group">
+                            <label>Other Email Platform Name</label>
+                            <input type="text" name="email_platform_other" placeholder="e.g. Zoho Mail">
+                        </div>
+                    </div>
+
+                    <!-- Email Security Inbuilt → conditionally shows "Other Email Security" if No -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-shield"></i> Email Security Inbuilt
                             (M365)?</label>
                         <div class="radio-group toggle-group">
-                            <label class="radio-label compact"><input type="radio" name="email_sec_inbuilt" value="yes">
-                                Yes</label>
-                            <label class="radio-label compact"><input type="radio" name="email_sec_inbuilt" value="no">
-                                No</label>
+                            <label class="radio-label compact">
+                                <input type="radio" name="email_sec_inbuilt" value="yes" class="eden-yn-trigger"
+                                    data-target="email-sec-other" data-show-value="no"> Yes
+                            </label>
+                            <label class="radio-label compact">
+                                <input type="radio" name="email_sec_inbuilt" value="no" class="eden-yn-trigger"
+                                    data-target="email-sec-other" data-show-value="no"> No
+                            </label>
                         </div>
                     </div>
 
-                    <div class="form-group"><label>Other Email Security Solution</label><input type="text"
-                            name="email_security_solution" placeholder="e.g. Proofpoint, Mimecast"></div>
+                    <div class="conditional-field" id="email-sec-other" style="display:none;">
+                        <div class="form-group">
+                            <label>Any Other Email Security Solution</label>
+                            <input type="text" name="email_security_solution" placeholder="e.g. Proofpoint, Mimecast">
+                        </div>
+                    </div>
 
+                    <!-- Email Backup -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-cloud-arrow-up"></i> Email Backup?</label>
                         <div class="radio-group toggle-group">
@@ -466,6 +474,8 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                 No</label>
                         </div>
                     </div>
+
+                    <!-- Email Archival -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-box-archive"></i> Email Archival?</label>
                         <div class="radio-group toggle-group">
@@ -475,20 +485,30 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                 No</label>
                         </div>
                     </div>
+
+                    <!-- Email Encryption (conditional) -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-lock"></i> Email Encryption?</label>
                         <div class="radio-group toggle-group">
-                            <label class="radio-label compact"><input type="radio" name="email_encryption" value="yes"
-                                    class="eden-yn-trigger" data-target="email-enc-details"> Yes</label>
-                            <label class="radio-label compact"><input type="radio" name="email_encryption" value="no"
-                                    class="eden-yn-trigger" data-target="email-enc-details"> No</label>
+                            <label class="radio-label compact">
+                                <input type="radio" name="email_encryption" value="yes" class="eden-yn-trigger"
+                                    data-target="email-enc-details"> Yes
+                            </label>
+                            <label class="radio-label compact">
+                                <input type="radio" name="email_encryption" value="no" class="eden-yn-trigger"
+                                    data-target="email-enc-details"> No
+                            </label>
                         </div>
                     </div>
+
                     <div class="conditional-field" id="email-enc-details" style="display:none;">
-                        <div class="form-group"><label>Encryption Solution</label><input type="text"
-                                name="email_encryption_solution" placeholder="e.g. Virtru, PGP"></div>
+                        <div class="form-group">
+                            <label>Encryption Solution</label>
+                            <input type="text" name="email_encryption_solution" placeholder="e.g. Virtru, PGP">
+                        </div>
                     </div>
 
+                    <!-- Security Awareness Training -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-graduation-cap"></i> Security Awareness
                             Training?</label>
@@ -499,6 +519,8 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                     value="no"> No</label>
                         </div>
                     </div>
+
+                    <!-- Phishing Simulation -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-fish"></i> Phishing Simulation?</label>
                         <div class="radio-group toggle-group">
@@ -508,6 +530,8 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                 No</label>
                         </div>
                     </div>
+
+                    <!-- DMARC -->
                     <div class="yn-row">
                         <label class="yn-label"><i class="fa-solid fa-envelope-circle-check"></i> DMARC?</label>
                         <div class="radio-group toggle-group">
@@ -540,15 +564,21 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                         </div>
                     </div>
                     <div class="conditional-field" id="siem-details" style="display:none;">
-                        <div class="form-group">
-                            <label>SIEM Deployment</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="siem_deployment" value="On-Prem">
-                                    On-Prem</label>
-                                <label class="radio-label"><input type="radio" name="siem_deployment" value="Cloud">
-                                    Cloud</label>
-                                <label class="radio-label"><input type="radio" name="siem_deployment" value="Hybrid">
-                                    Hybrid</label>
+                        <div class="form-grid cols-2">
+                            <div class="form-group">
+                                <label>SIEM Deployment</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="siem_deployment"
+                                            value="On-Prem"> On-Prem</label>
+                                    <label class="radio-label"><input type="radio" name="siem_deployment" value="Cloud">
+                                        Cloud</label>
+                                    <label class="radio-label"><input type="radio" name="siem_deployment"
+                                            value="Hybrid"> Hybrid</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>SIEM OEM Name</label>
+                                <input type="text" name="siem_oem" placeholder="e.g. Splunk, IBM QRadar, Wazuh">
                             </div>
                         </div>
                     </div>
@@ -564,15 +594,21 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                         </div>
                     </div>
                     <div class="conditional-field" id="soc-type-details" style="display:none;">
-                        <div class="form-group">
-                            <label>SOC Type</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="soc_type" value="In-house">
-                                    In-house</label>
-                                <label class="radio-label"><input type="radio" name="soc_type" value="Managed">
-                                    Managed</label>
-                                <label class="radio-label"><input type="radio" name="soc_type" value="Hybrid">
-                                    Hybrid</label>
+                        <div class="form-grid cols-2">
+                            <div class="form-group">
+                                <label>SOC Type</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="soc_type" value="In-house">
+                                        In-house</label>
+                                    <label class="radio-label"><input type="radio" name="soc_type" value="Managed">
+                                        Managed</label>
+                                    <label class="radio-label"><input type="radio" name="soc_type" value="Hybrid">
+                                        Hybrid</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>SOC OEM Name</label>
+                                <input type="text" name="soc_oem" placeholder="e.g. Splunk, ArcSight, Sentinel">
                             </div>
                         </div>
                     </div>
@@ -654,7 +690,7 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                                 <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="GDPR">
                                     GDPR</label>
                                 <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="HIPAA">
-                                    HIPAA</label>
+                                    HIPPA</label>
                                 <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="CSCRF">
                                     CSCRF</label>
                                 <label class="checkbox-label"><input type="checkbox" name="compliances[]" value="RBI">
@@ -701,7 +737,6 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
                     <label class="checkbox-label">
                         <input type="checkbox" id="consent_checkbox" name="consent">
                         <span>I consent to Eden Infosol collecting and processing this data for IT assessment purposes.
-                            <a href="/privacy-policy" target="_blank">Privacy Policy</a></span>
                     </label>
                     <div class="field-error" id="consent-error"></div>
                 </div>
@@ -730,54 +765,61 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 </section>
 
 <!-- ===== RESULTS SECTION ===== -->
+<!-- ===== THANK YOU / CONFIRMATION SECTION ===== -->
 <section class="eden-results-section" id="resultsSection" style="display:none;">
     <div class="eden-container">
         <div class="results-card">
             <div class="results-header">
                 <div class="results-checkmark"><i class="fas fa-circle-check"></i></div>
-                <h2>Assessment Complete!</h2>
-                <p>Thank you, <strong id="resultClientName"></strong>. Here's your preliminary IT Risk Summary.</p>
+                <h2>Submission Received!</h2>
+                <p>Thank you, <strong id="resultClientName"></strong>. Your assessment has been submitted successfully.
+                </p>
             </div>
 
-            <div class="results-score-area">
-                <div class="score-ring-container">
-                    <svg class="score-ring" viewBox="0 0 120 120">
-                        <circle class="score-ring-bg" cx="60" cy="60" r="52" />
-                        <circle class="score-ring-fill" id="scoreRingFill" cx="60" cy="60" r="52" />
-                    </svg>
-                    <div class="score-ring-text">
-                        <span class="score-percentage" id="scorePercentage">0</span><span
-                            class="score-percent-sign">%</span>
-                        <span class="score-label">Risk</span>
+            <div class="thank-you-message">
+                <div class="thank-you-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <h3>What Happens Next?</h3>
+                <p>Our IT specialists will carefully analyze your infrastructure and security details. We'll reach out
+                    to you within <strong>24 hours</strong> with a personalized analysis and tailored recommendations
+                    for your organization.</p>
+            </div>
+
+            <div class="thank-you-steps">
+                <div class="thank-you-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h4>Confirmation Email</h4>
+                        <p>You'll receive a confirmation email at the address you provided.</p>
                     </div>
                 </div>
-                <div class="score-details">
-                    <div id="scoreLevelBadge" class="score-level level-unknown">
-                        <span id="scoreLevelText">Unknown</span>
+                <div class="thank-you-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h4>Expert Review</h4>
+                        <p>Our team reviews your IT environment and security posture.</p>
                     </div>
-                    <div class="score-breakdown">
-                        <div class="breakdown-item"><span class="breakdown-label">Risk Score</span> <span
-                                class="breakdown-value" id="riskScoreValue">0</span></div>
-                        <div class="breakdown-item"><span class="breakdown-label">Max Possible</span> <span
-                                class="breakdown-value" id="maxScoreValue">0</span></div>
-                        <div class="breakdown-item"><span class="breakdown-label">Assessment ID</span> <span
-                                class="breakdown-value" id="assessmentIdValue">#&mdash;</span></div>
+                </div>
+                <div class="thank-you-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h4>Personalized Insights</h4>
+                        <p>Within 24 hours, we'll share recommendations tailored to your needs.</p>
                     </div>
                 </div>
             </div>
-
-            <div class="results-message" id="resultsMessage"></div>
 
             <div class="results-actions">
-                <a href="<?php echo esc_url($contact_url); ?>" class="btn-consult"><i class="fas fa-calendar-check"></i>
-                    Book Free Consultation</a>
-                <button type="button" class="btn-download" id="downloadReportBtn"><i class="fas fa-download"></i>
-                    Download Summary</button>
+                <a href="<?php echo esc_url($contact_url); ?>" class="btn-consult">
+                    <i class="fas fa-calendar-check"></i> Book Free Consultation
+                </a>
+                <a href="<?php echo esc_url($home_url); ?>" class="btn-download">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
             </div>
 
             <div class="results-footer">
-                <p><i class="fas fa-envelope"></i> A detailed report has been sent to your email. Our team will reach
-                    out within 24 hours.</p>
+                <p><i class="fas fa-envelope"></i> Questions? Reach us at <a
+                        href="mailto:management@edeninfosol.com">management@edeninfosol.com</a></p>
             </div>
         </div>
     </div>
@@ -829,60 +871,120 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
 <input type="number" name="loc_{{IDX}}_num_racks" min="0" placeholder="e.g. 2" class="eden-qty-trigger" data-container="loc_{{IDX}}_rack_rows" data-tpl="rack" data-prefix="loc_{{IDX}}_rack"></div></div>
 <div class="dynamic-rows" id="loc_{{IDX}}_rack_rows"></div>
 </div>
-<h4 class="sub-heading">Routers</h4>
-<div class="form-grid cols-1"><div class="form-group"><label>No. of Owned Routers</label>
-<input type="number" name="loc_{{IDX}}_num_owned_routers" data-label="Router" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_router_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_router"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_router_rows"></div>
-<div class="form-grid cols-1"><div class="form-group"><label>No. of ISP Provided Routers</label><input type="number" name="loc_{{IDX}}_num_isp_routers" min="0" placeholder="0"></div></div>
-<h4 class="sub-heading">Firewalls</h4>
-<div class="form-grid cols-1"><div class="form-group"><label>No. of Firewalls</label>
-<input type="number" name="loc_{{IDX}}_num_firewalls" data-label="Firewall" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_fw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_fw"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_fw_rows"></div>
-<div class="form-grid cols-3">
-<div class="form-group"><label>Firewall-based SD-WAN</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_sd_wan" value="yes"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_sd_wan" value="no"> No</label>
-</div></div>
-<div class="form-group"><label>Site-to-Site VPN</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_s2s_vpn" value="yes"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_s2s_vpn" value="no"> No</label>
-</div></div>
-<div class="form-group"><label>Point-to-Site VPN</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_p2s_vpn" value="yes"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_p2s_vpn" value="no"> No</label>
-</div></div>
-</div>
-<h4 class="sub-heading">Network Switches</h4>
-<div class="form-grid cols-1"><div class="form-group"><label>Core Switches — Quantity</label>
-<input type="number" name="loc_{{IDX}}_core_sw_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_core_sw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_core_sw"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_core_sw_rows"></div>
-<div class="form-grid cols-1"><div class="form-group"><label>Distribution Switches — Quantity</label>
-<input type="number" name="loc_{{IDX}}_dist_sw_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_dist_sw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_dist_sw"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_dist_sw_rows"></div>
-<div class="form-grid cols-1"><div class="form-group"><label>Access Layer Switches — Quantity</label>
-<input type="number" name="loc_{{IDX}}_access_sw_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_access_sw_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_access_sw"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_access_sw_rows"></div>
-<h4 class="sub-heading">WiFi Solutions</h4>
-<div class="form-group"><label>Standalone AP</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_standalone_ap" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_standalone_ap_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_standalone_ap" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_standalone_ap_sec"> No</label>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_standalone_ap_sec" style="display:none;">
-<div class="form-grid cols-1"><div class="form-group"><label>Standalone AP Quantity</label>
-<input type="number" name="loc_{{IDX}}_standalone_ap_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_standalone_ap_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_standalone_ap"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_standalone_ap_rows"></div>
-</div>
-<div class="form-group"><label>Controller-Based AP</label><div class="radio-group">
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_controller_ap" value="yes" class="eden-yn-trigger" data-target="loc_{{IDX}}_controller_ap_sec"> Yes</label>
-<label class="radio-label"><input type="radio" name="loc_{{IDX}}_controller_ap" value="no" class="eden-yn-trigger" data-target="loc_{{IDX}}_controller_ap_sec"> No</label>
-</div></div>
-<div class="conditional-field" id="loc_{{IDX}}_controller_ap_sec" style="display:none;">
-<div class="form-grid cols-1"><div class="form-group"><label>Controller-Based AP Quantity</label>
-<input type="number" name="loc_{{IDX}}_controller_ap_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_controller_ap_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_controller_ap"></div></div>
-<div class="dynamic-rows" id="loc_{{IDX}}_controller_ap_rows"></div>
-</div>
+<h4 class="sub-heading">Routers & Firewalls</h4>
+
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">Device</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-route"></i> Owned Routers</td>
+                <td><input type="number" name="loc_{{IDX}}_num_owned_routers" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_owned_routers_oem" placeholder="e.g. Cisco, MikroTik"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-cloud-arrow-down"></i> ISP-Provided Routers</td>
+                <td><input type="number" name="loc_{{IDX}}_num_isp_routers" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_isp_routers_oem" placeholder="e.g. ISP-provided model"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-shield-halved"></i> Firewalls</td>
+                <td><input type="number" name="loc_{{IDX}}_num_firewalls" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_firewalls_oem" placeholder="e.g. SonicWall, Fortinet"></td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
+<!-- VPN & SD-WAN — kept as Y/N rows since they're capability questions, not devices -->
+<div class="subsection-label" style="margin-top:18px;">Network Features</div>
+
+<div class="yn-row">
+    <label class="yn-label"><i class="fa-solid fa-network-wired"></i> Firewall-based SD-WAN?</label>
+    <div class="radio-group toggle-group">
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_sd_wan" value="yes"> Yes</label>
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_sd_wan" value="no"> No</label>
+    </div>
+</div>
+
+<div class="yn-row">
+    <label class="yn-label"><i class="fa-solid fa-arrows-left-right-to-line"></i> Site-to-Site VPN?</label>
+    <div class="radio-group toggle-group">
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_s2s_vpn" value="yes"> Yes</label>
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_s2s_vpn" value="no"> No</label>
+    </div>
+</div>
+
+<div class="yn-row">
+    <label class="yn-label"><i class="fa-solid fa-laptop-arrow-down"></i> Point-to-Site VPN?</label>
+    <div class="radio-group toggle-group">
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_p2s_vpn" value="yes"> Yes</label>
+        <label class="radio-label compact"><input type="radio" name="loc_{{IDX}}_p2s_vpn" value="no"> No</label>
+    </div>
+</div>
+
+<h4 class="sub-heading">Network Switches</h4>
+
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">Switch Type</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-network-wired"></i> Core Switches (L3)</td>
+                <td><input type="number" name="loc_{{IDX}}_core_sw_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_core_sw_oem" placeholder="e.g. Cisco, HP Aruba"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-sitemap"></i> Distribution Switches</td>
+                <td><input type="number" name="loc_{{IDX}}_dist_sw_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_dist_sw_oem" placeholder="e.g. Cisco, Juniper"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-diagram-project"></i> Access Layer Switches</td>
+                <td><input type="number" name="loc_{{IDX}}_access_sw_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_access_sw_oem" placeholder="e.g. Cisco, HP, Netgear"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<h4 class="sub-heading">WiFi / Access Points</h4>
+
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">AP Type</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-wifi"></i> Standalone AP</td>
+                <td><input type="number" name="loc_{{IDX}}_standalone_ap_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_standalone_ap_oem" placeholder="e.g. Ubiquiti, TP-Link"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-tower-broadcast"></i> Controller-Based AP</td>
+                <td><input type="number" name="loc_{{IDX}}_controller_ap_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_controller_ap_oem" placeholder="e.g. Cisco Meraki, Aruba"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</div>
 <div class="toggle-section" id="loc_{{IDX}}_sec_dc">
 <div class="form-divider"><span>Data Centre &amp; Server Infrastructure</span></div>
 <div class="form-grid cols-2">
@@ -1043,20 +1145,47 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
     <div class="form-divider"><span>Physical Security &amp; Safety</span></div>
 
     <h4 class="sub-heading">CCTV Surveillance</h4>
-    <div class="form-grid cols-1">
-        <div class="form-group">
-            <label>NVR/DVR Quantity</label>
-            <input type="number" name="loc_{{IDX}}_nvr_qty" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_nvr_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_nvr" data-label="NVR/DVR">
-        </div>
-    </div>
-    <div class="dynamic-rows" id="loc_{{IDX}}_nvr_rows"></div>
 
-    <div class="form-grid cols-4">
-        <div class="form-group"><label>Storage Capacity</label><input type="text" name="loc_{{IDX}}_cctv_storage" placeholder="e.g. 4 TB"></div>
-        <div class="form-group"><label>Retention Period</label><input type="text" name="loc_{{IDX}}_cctv_retention" placeholder="e.g. 30 days"></div>
-        <div class="form-group"><label>IP Cameras</label><input type="number" name="loc_{{IDX}}_ip_cameras" min="0" placeholder="0"></div>
-        <div class="form-group"><label>Analog Cameras</label><input type="number" name="loc_{{IDX}}_analog_cameras" min="0" placeholder="0"></div>
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">Equipment</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-hard-drive"></i> NVR / DVR Units</td>
+                <td><input type="number" name="loc_{{IDX}}_nvr_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_nvr_oem" placeholder="e.g. Hikvision, Dahua"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-video"></i> IP Cameras</td>
+                <td><input type="number" name="loc_{{IDX}}_ip_cameras" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_ip_cameras_oem" placeholder="e.g. Hikvision, Axis"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-camera-retro"></i> Analog Cameras</td>
+                <td><input type="number" name="loc_{{IDX}}_analog_cameras" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_analog_cameras_oem" placeholder="e.g. CP Plus, Honeywell"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Storage & Retention details below table -->
+<div class="form-grid cols-2" style="margin-top:14px;">
+    <div class="form-group">
+        <label>Total Storage Capacity</label>
+        <input type="text" name="loc_{{IDX}}_cctv_storage" placeholder="e.g. 4 TB">
     </div>
+    <div class="form-group">
+        <label>Retention Period</label>
+        <input type="text" name="loc_{{IDX}}_cctv_retention" placeholder="e.g. 30 days">
+    </div>
+</div>
 
     <h4 class="sub-heading">Biometric / Access Control</h4>
     <div class="form-grid cols-4">
@@ -1160,12 +1289,35 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
     </div>
 
     <h4 class="sub-heading">Phones</h4>
-    <div class="form-grid cols-3">
-        <div class="form-group"><label>Analog Phones Qty</label><input type="number" name="loc_{{IDX}}_analog_phones" min="0" placeholder="0"></div>
-        <div class="form-group"><label>IP Phones Qty</label><input type="number" name="loc_{{IDX}}_ip_phones" min="0" placeholder="0"></div>
-        <div class="form-group"><label>Soft Phones Qty</label><input type="number" name="loc_{{IDX}}_soft_phones" min="0" placeholder="0"></div>
-    </div>
 
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:35%;">Phone Type</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-phone"></i> Analog Phones</td>
+                <td><input type="number" name="loc_{{IDX}}_analog_phones" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_analog_phones_oem" placeholder="e.g. Panasonic, Beetel"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-phone-volume"></i> IP Phones</td>
+                <td><input type="number" name="loc_{{IDX}}_ip_phones" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_ip_phones_oem" placeholder="e.g. Cisco, Yealink"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-mobile-screen-button"></i> Soft Phones</td>
+                <td><input type="number" name="loc_{{IDX}}_soft_phones" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_soft_phones_oem" placeholder="e.g. Zoom Phone, Teams"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
     <div class="form-group">
         <label>PA System</label>
         <div class="radio-group">
@@ -1189,50 +1341,72 @@ $contact_url = eden_get_page_url('contact-us', home_url('/contact-us/'));
     </div>
     <div class="dynamic-rows" id="loc_{{IDX}}_vc_rows"></div>
 
-    <h4 class="sub-heading">End User Computing</h4>
-    <div class="form-grid cols-3">
-        <div class="form-group">
-            <label>Laptops</label>
-            <input type="number" name="loc_{{IDX}}_laptops_qty" data-label="Laptop" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_laptops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_laptops">
-        </div>
-        <div class="form-group">
-            <label>Desktops</label>
-            <input type="number" name="loc_{{IDX}}_desktops_qty" data-label="Desktop" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_desktops_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_desktops">
-        </div>
-        <div class="form-group">
-            <label>Workstations</label>
-            <input type="number" name="loc_{{IDX}}_workstations_qty" data-label="Workstation" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_workstations_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_workstations">
-        </div>
-        <div class="form-group">
-            <label>Thin Clients</label>
-            <input type="number" name="loc_{{IDX}}_thin_clients_qty" data-label="Thin Client" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_thin_clients_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_thin_clients">
-        </div>
-        <div class="form-group">
-            <label>Tablets</label>
-            <input type="number" name="loc_{{IDX}}_tablets_qty" data-label="Tablet" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_tablets_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_tablets">
-        </div>
-        <div class="form-group">
-            <label>Phones (Company-Owned)</label>
-            <input type="number" name="loc_{{IDX}}_co_phones_qty" data-label="Phone" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_co_phones_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_co_phones">
-        </div>
-        <div class="form-group">
-            <label>Printers</label>
-            <input type="number" name="loc_{{IDX}}_printers_qty" data-label="Printer" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_printers_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_printers">
-        </div>
-        <div class="form-group">
-            <label>Scanners</label>
-            <input type="number" name="loc_{{IDX}}_scanners_qty" data-label="Scanner" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_scanners_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_scanners">
-        </div>
-        <div class="form-group">
-            <label>Multifunction Devices</label>
-            <input type="number" name="loc_{{IDX}}_mfp_qty" data-label="Multifunction Device" min="0" placeholder="0" class="eden-qty-trigger" data-container="loc_{{IDX}}_mfp_rows" data-tpl="makemodel" data-prefix="loc_{{IDX}}_mfp">
-        </div>
-         <div class="form-grid cols-1">
-        <div class="form-group">
-            <label>Headsets Qty</label>
-            <input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0">
-        </div>
-    </div>
+   
+<h4 class="sub-heading">End User Computing</h4>
+
+<div class="security-table-wrapper">
+    <table class="security-table eden-device-table">
+        <thead>
+            <tr>
+                <th style="width:30%;">Device</th>
+                <th style="width:120px;">Quantity</th>
+                <th>OEM / Vendor</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa-solid fa-laptop"></i> Laptops</td>
+                <td><input type="number" name="loc_{{IDX}}_laptops_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_laptops_oem" placeholder="e.g. Dell, HP, Lenovo"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-desktop"></i> Desktops</td>
+                <td><input type="number" name="loc_{{IDX}}_desktops_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_desktops_oem" placeholder="e.g. Dell, HP, Lenovo"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-display"></i> Workstations</td>
+                <td><input type="number" name="loc_{{IDX}}_workstations_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_workstations_oem" placeholder="e.g. HP Z-Series, Dell Precision"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-server"></i> Thin Clients</td>
+                <td><input type="number" name="loc_{{IDX}}_thin_clients_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_thin_clients_oem" placeholder="e.g. Wyse, IGEL"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-tablet-screen-button"></i> Tablets</td>
+                <td><input type="number" name="loc_{{IDX}}_tablets_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_tablets_oem" placeholder="e.g. iPad, Samsung"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-mobile-screen"></i> Phones (Company-Owned)</td>
+                <td><input type="number" name="loc_{{IDX}}_co_phones_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_co_phones_oem" placeholder="e.g. Apple, Samsung"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-print"></i> Printers</td>
+                <td><input type="number" name="loc_{{IDX}}_printers_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_printers_oem" placeholder="e.g. HP, Canon, Epson"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-scanner"></i> Scanners</td>
+                <td><input type="number" name="loc_{{IDX}}_scanners_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_scanners_oem" placeholder="e.g. Canon, Epson"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-copy"></i> Multifunction Devices</td>
+                <td><input type="number" name="loc_{{IDX}}_mfp_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_mfp_oem" placeholder="e.g. Xerox, Canon, Ricoh"></td>
+            </tr>
+            <tr>
+                <td><i class="fa-solid fa-headset"></i> Headsets</td>
+                <td><input type="number" name="loc_{{IDX}}_headsets_qty" min="0" placeholder="0"></td>
+                <td><input type="text" name="loc_{{IDX}}_headsets_oem" placeholder="e.g. Jabra, Plantronics"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
     </div>
 
     <div class="dynamic-rows" id="loc_{{IDX}}_laptops_rows"></div>

@@ -19,9 +19,17 @@ $now = new DateTime();
 <section class="hero hero-video-section">
     <div class="hero-video-wrap" id="hero-video-wrap">
         <!-- Poster loads instantly — video injected by JS after page load -->
-        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/hero-poster.png'); ?>"
-            alt="Eden Infosol - IT & Cybersecurity Solutions" class="hero-poster" fetchpriority="high" width="1280"
-            height="720">
+        <picture class="hero-poster-picture">
+            <source media="(max-width: 768px)"
+                srcset="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/hero-poster-mobile.webp"
+                type="image/webp">
+            <source srcset="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/hero-poster.webp"
+                type="image/webp">
+            <img class="hero-poster"
+                src="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/hero-poster.jpg"
+                alt="Eden Infosol IT Infrastructure & Cybersecurity Solutions" width="1920" height="1080"
+                fetchpriority="high" decoding="async">
+        </picture>
         <div class="hero-video-overlay"></div>
     </div>
 
