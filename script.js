@@ -2412,3 +2412,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDEN — Hero Laptop Autoplay: cleanup + once-per-session
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+    var anim = document.getElementById('edenLaptopAnim');
+    if (!anim) return;
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var alreadyPlayed = sessionStorage.getItem('eden_laptop_anim_done') === 'true';
+
+    // Skip if reduced motion OR already played this session
+    if (reduced || alreadyPlayed) {
+        anim.parentNode && anim.parentNode.removeChild(anim);
+        return;
+    }
+
+    // Mark as played immediately (so refresh in same session skips it)
+    sessionStorage.setItem('eden_laptop_anim_done', 'true');
+
+    // After total animation time (~3.4s), remove from DOM cleanly
+    setTimeout(function () {
+        if (anim.parentNode) anim.parentNode.removeChild(anim);
+    }, 3500);
+})();

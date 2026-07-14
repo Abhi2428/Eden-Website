@@ -16,7 +16,27 @@ $now = new DateTime();
 ?>
 
 <!-- ===== HERO WITH OPTIMIZED VIDEO ===== -->
-<section class="hero hero-video-section">
+<section class="hero hero-video-section" id="edenHero">
+
+    <!-- Laptop autoplay animation (inside hero, header stays visible) -->
+    <div class="eden-laptop-anim" id="edenLaptopAnim" aria-hidden="true">
+        <div class="eden-laptop-device">
+            <div class="eden-laptop-screen">
+                <div class="eden-laptop-screen-content">
+                    <h2 class="eden-laptop-title">
+                        Transforming Vision Into <span>Solutions</span>
+                    </h2>
+                    <div class="eden-laptop-buttons">
+                        <div class="eden-laptop-btn eden-laptop-btn-primary">Book a Free Consultation</div>
+                        <div class="eden-laptop-btn eden-laptop-btn-secondary">Explore Our Services</div>
+                    </div>
+                </div>
+            </div>
+            <div class="eden-laptop-hinge"></div>
+            <div class="eden-laptop-base-stand"></div>
+        </div>
+    </div>
+
     <div class="hero-video-wrap" id="hero-video-wrap">
         <!-- Poster loads instantly — video injected by JS after page load -->
         <picture class="hero-poster-picture">
@@ -235,7 +255,7 @@ $now = new DateTime();
 
                     <div class="testimonial-card">
                         <div class="testimonial-card-inner">
-                            <p class="testimonial-text">"Eden Infosol’s strength lies in their ability to integrate
+                            <p class="testimonial-text">"Eden Infosol's strength lies in their ability to integrate
                                 multiple technologies seamlessly—networking, cloud, security, and endpoints. We no
                                 longer deal with multiple vendors; they handle it all end-to-end."</p>
                             <div class="testimonial-author">Operations Head</div>
@@ -245,7 +265,7 @@ $now = new DateTime();
 
                     <div class="testimonial-card">
                         <div class="testimonial-card-inner">
-                            <p class="testimonial-text">"We were struggling with unpredictable IT costs. With Eden’s
+                            <p class="testimonial-text">"We were struggling with unpredictable IT costs. With Eden's
                                 managed services, everything is now structured and budget-friendly without compromising
                                 on quality or response time."</p>
                             <div class="testimonial-author">Founder</div>
