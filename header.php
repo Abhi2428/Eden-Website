@@ -27,7 +27,7 @@ $careers_url = eden_get_page_url('careers', home_url('/careers/'));
 </head>
 
 <body <?php body_class(); ?>>
-    <nav class="navbar">
+    <nav class="navbar navbar-float">
         <div class="container">
 
             <!-- Hamburger FIRST = appears on LEFT -->
@@ -42,7 +42,6 @@ $careers_url = eden_get_page_url('careers', home_url('/careers/'));
                     alt="Eden Infosol" class="nav-brand-logo">
                 <div class="nav-brand-text">
                     <span class="nav-logo">EDEN <span>INFOSOL</span></span>
-                    <span class="nav-tagline">An IT Infrastructure & Cybersecurity Solutions Company</span>
                 </div>
             </a>
 
@@ -68,11 +67,10 @@ $careers_url = eden_get_page_url('careers', home_url('/careers/'));
                 <li><a href="<?php echo esc_url($about_url); ?>">About Us</a></li>
                 <li><a href="<?php echo esc_url($careers_url); ?>" class="nav-careers-link">Careers <span
                             class="nav-hiring-badge">Hiring</span></a></li>
-                <li><a href="<?php echo esc_url($contact_url); ?>">Contact Us</a></li>
                 <li class="nav-cta"><a href="<?php echo esc_url($assess_url); ?>" class="btn btn-primary">Get Your
                         Assessment</a></li>
 
-                <!-- Social icons INSIDE nav-links = shows in mobile sidebar -->
+                <!-- Social icons INSIDE nav-links = shows in mobile sidebar only -->
                 <li class="sidebar-social">
                     <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
                         aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
@@ -82,16 +80,6 @@ $careers_url = eden_get_page_url('careers', home_url('/careers/'));
                         aria-label="Google Maps"><i class="fas fa-map-marker-alt"></i></a>
                 </li>
             </ul>
-
-            <!-- Desktop-only social icons (outside nav-links) -->
-            <div class="nav-social desktop-only-social">
-                <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
-                    aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                <a href="https://www.facebook.com/edeninfosol" target="_blank" rel="noopener" aria-label="Facebook"><i
-                        class="fab fa-facebook-f"></i></a>
-                <a href="https://maps.google.com/?q=Eden+Infosol+Mumbai" target="_blank" rel="noopener"
-                    aria-label="Google Maps"><i class="fas fa-map-marker-alt"></i></a>
-            </div>
 
         </div>
     </nav>
