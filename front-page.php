@@ -18,24 +18,6 @@ $now = new DateTime();
 <!-- ===== HERO WITH OPTIMIZED VIDEO ===== -->
 <section class="hero hero-video-section" id="edenHero">
 
-    <!-- Laptop autoplay animation (inside hero, header stays visible) -->
-    <div class="eden-laptop-anim" id="edenLaptopAnim" aria-hidden="true">
-        <div class="eden-laptop-device">
-            <div class="eden-laptop-screen">
-                <div class="eden-laptop-screen-content">
-                    <h2 class="eden-laptop-title">
-                        Transforming Vision Into <span>Solutions</span>
-                    </h2>
-                    <div class="eden-laptop-buttons">
-                        <div class="eden-laptop-btn eden-laptop-btn-primary">Book a Free Consultation</div>
-                        <div class="eden-laptop-btn eden-laptop-btn-secondary">Explore Our Services</div>
-                    </div>
-                </div>
-            </div>
-            <div class="eden-laptop-hinge"></div>
-            <div class="eden-laptop-base-stand"></div>
-        </div>
-    </div>
 
     <div class="hero-video-wrap" id="hero-video-wrap">
         <!-- Poster loads instantly — video injected by JS after page load -->
