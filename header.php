@@ -27,6 +27,28 @@ $careers_url = eden_get_page_url('careers', home_url('/careers/'));
 </head>
 
 <body <?php body_class(); ?>>
+    <!-- Radial expanding social orbit -->
+    <aside class="eden-orbit" aria-label="Follow Eden Infosol">
+        <button class="eden-orbit__trigger" type="button" aria-label="Show social links">
+            <span class="eden-orbit__dot"></span>
+            <span class="eden-orbit__dot"></span>
+            <span class="eden-orbit__dot"></span>
+        </button>
+        <div class="eden-orbit__items">
+            <a href="https://www.linkedin.com/in/eden-infosol-154a66121/" target="_blank" rel="noopener"
+                class="eden-orbit__item" style="--i:0" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+            </a>
+            <a href="https://www.facebook.com/edeninfosol" target="_blank" rel="noopener" class="eden-orbit__item"
+                style="--i:1" aria-label="Facebook">
+                <i class="fab fa-facebook-f" aria-hidden="true"></i>
+            </a>
+            <a href="https://maps.google.com/?q=Eden+Infosol+Mumbai" target="_blank" rel="noopener"
+                class="eden-orbit__item" style="--i:2" aria-label="Visit us in Mumbai">
+                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            </a>
+        </div>
+    </aside>
     <nav class="navbar navbar-float">
         <div class="container">
 

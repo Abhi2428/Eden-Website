@@ -2705,3 +2705,35 @@ document.addEventListener('DOMContentLoaded', function () {
         startAutoRotate();
     }
 })();
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDEN — Social Orbit: click to open, click outside to close
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+    var orbit = document.querySelector('.eden-orbit');
+    if (!orbit) return;
+
+    var trigger = orbit.querySelector('.eden-orbit__trigger');
+    if (!trigger) return;
+
+    // Toggle open state on trigger click
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        orbit.classList.toggle('is-open');
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+        if (orbit.classList.contains('is-open') && !orbit.contains(e.target)) {
+            orbit.classList.remove('is-open');
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') orbit.classList.remove('is-open');
+    });
+
+    // Don't close when clicking a social icon (let it navigate)
+    // Also don't close on click inside the orbit — only close on outside click or Escape
+})();
