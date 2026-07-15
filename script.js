@@ -2412,3 +2412,304 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDEN — Rotating Bento with absolute positioning (visible animation)
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+    var grid = document.querySelector('.pillars-grid');
+    if (!grid) return;
+
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.pillar-card'));
+    if (cards.length !== 5) return;
+
+    var GAP = 16;
+    var isMobile = function () { return window.innerWidth <= 1000; };
+
+    /* Compute slot positions in pixels based on current grid width/height.
+       Slots layout (5 cells total in a 2-col grid, 3 rows on right + flagship spans 2 rows on left):
+
+       flagship: col 1, rows 1–2 (big left)
+       a:        col 1, row 3   (bottom-left)
+       b:        col 2, row 1   (top-right)
+       c:        col 2, row 2   (middle-right)
+       d:        col 2, row 3   (bottom-right)
+    */
+    function computeSlots() {
+        var W = grid.clientWidth;
+        var H = grid.clientHeight;
+
+        // Left column is 1.4fr, right column 1fr → ratio 1.4:1
+        var leftW = (W - GAP) * (1.4 / 2.4);
+        var rightW = (W - GAP) * (1 / 2.4);
+
+        // 3 rows equal height
+        var rowH = (H - GAP * 2) / 3;
+
+        return {
+            flagship: { left: 0, top: 0, width: leftW, height: rowH * 2 + GAP },
+            a: { left: 0, top: (rowH * 2 + GAP) + GAP, width: leftW, height: rowH },
+            b: { left: leftW + GAP, top: 0, width: rightW, height: rowH },
+            c: { left: leftW + GAP, top: rowH + GAP, width: rightW, height: rowH },
+            d: { left: leftW + GAP, top: (rowH + GAP) * 2, width: rightW, height: rowH }
+        };
+    }
+
+    /* Track which card is in which slot */
+    var slotOrder = ['flagship', 'b', 'c', 'd', 'a']; // matches DOM order of your 5 pillar cards
+    var cardSlots = {};
+    cards.forEach(function (card, i) {
+        cardSlots[i] = slotOrder[i];
+        card.setAttribute('data-slot', slotOrder[i]);
+    });
+
+    /* Apply current slot positions to each card */
+    function applyPositions() {
+        if (isMobile()) {
+            // Let CSS handle stacking on mobile
+            cards.forEach(function (card) {
+                card.style.left = '';
+                card.style.top = '';
+                card.style.width = '';
+                card.style.height = '';
+            });
+            return;
+        }
+        var slots = computeSlots();
+        cards.forEach(function (card, i) {
+            var slot = cardSlots[i];
+            var pos = slots[slot];
+            card.style.left = pos.left + 'px';
+            card.style.top = pos.top + 'px';
+            card.style.width = pos.width + 'px';
+            card.style.height = pos.height + 'px';
+        });
+    }
+
+    /* Initial positioning — need to wait for CSS to apply, then measure */
+    function init() {
+        applyPositions();
+    }
+
+    // Position immediately + after images/fonts load
+    init();
+    window.addEventListener('load', init);
+    window.addEventListener('resize', applyPositions);
+
+
+    /* ─── Anticlockwise rotation ─── */
+    /* Cycle: flagship → a → d → c → b → flagship
+       (big-left goes to bottom-left, bottom-left goes to bottom-right,
+        bottom-right goes to middle-right, middle-right goes to top-right,
+        top-right goes to big-left) */
+    var isAnimating = false;
+
+    function rotate() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        /* Rebuild cardSlots based on anticlockwise mapping */
+        var newSlots = {};
+        cards.forEach(function (card, i) {
+            var oldSlot = cardSlots[i];
+            var newSlot;
+            switch (oldSlot) {
+                case 'flagship': newSlot = 'a'; break;
+                case 'a': newSlot = 'd'; break;
+                case 'd': newSlot = 'c'; break;
+                case 'c': newSlot = 'b'; break;
+                case 'b': newSlot = 'flagship'; break;
+            }
+            newSlots[i] = newSlot;
+            card.setAttribute('data-slot', newSlot);
+        });
+        cardSlots = newSlots;
+
+        // On desktop, animate positions. On mobile, CSS handles it via data-slot only.
+        if (!isMobile()) {
+            applyPositions();
+        }
+
+        setTimeout(function () {
+            isAnimating = false;
+        }, 950);
+    }
+    /* Rotate anticlockwise until the given card reaches the flagship slot.
+       Chains rotations back-to-back so the user sees the animation clearly. */
+    function rotateUntilFlagship(targetCard) {
+        if (isAnimating) return;
+        if (targetCard.getAttribute('data-slot') === 'flagship') return;
+
+        // Anticlockwise rotation sequence: flagship → a → d → c → b → flagship
+        // Reverse map: what slot leads TO flagship after one rotation?
+        // b → flagship, so if target is at b, we need 1 rotation
+        // c → b → flagship, so if target is at c, we need 2 rotations
+        // d → c → b → flagship, need 3
+        // a → d → c → b → flagship, need 4
+        var slotDistances = { b: 1, c: 2, d: 3, a: 4 };
+        var currentSlot = targetCard.getAttribute('data-slot');
+        var stepsNeeded = slotDistances[currentSlot] || 1;
+
+        // Run rotations one after another, waiting for each to finish
+        var step = 0;
+        function runNext() {
+            if (step >= stepsNeeded) return;
+            rotate();
+            step++;
+            // Wait for animation to complete (matches the 950ms timeout in rotate)
+            setTimeout(runNext, 960);
+        }
+        runNext();
+    }
+
+    /* Mobile: directly swap the tapped card into the flagship slot,
+   push the previous flagship into the tapped card's old slot. */
+    function promoteToFlagship(targetCard) {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        var targetIndex = cards.indexOf(targetCard);
+        var targetOldSlot = cardSlots[targetIndex];
+
+        // Find the current flagship
+        var flagshipIndex = -1;
+        cards.forEach(function (c, i) {
+            if (cardSlots[i] === 'flagship') flagshipIndex = i;
+        });
+
+        if (flagshipIndex === -1) { isAnimating = false; return; }
+
+        // Swap slots
+        cardSlots[flagshipIndex] = targetOldSlot;
+        cardSlots[targetIndex] = 'flagship';
+
+        cards[flagshipIndex].setAttribute('data-slot', targetOldSlot);
+        cards[targetIndex].setAttribute('data-slot', 'flagship');
+
+        setTimeout(function () {
+            isAnimating = false;
+        }, 700);
+    }
+    /* Desktop: directly swap the clicked card into flagship (no chained rotation).
+   Old flagship takes the clicked card's previous slot. */
+    function promoteDirectly(targetCard) {
+        if (isAnimating || isMobile()) return;
+
+        var targetIndex = cards.indexOf(targetCard);
+        var targetOldSlot = cardSlots[targetIndex];
+        if (targetOldSlot === 'flagship') return;
+
+        isAnimating = true;
+
+        // Find the current flagship
+        var flagshipIndex = -1;
+        cards.forEach(function (c, i) {
+            if (cardSlots[i] === 'flagship') flagshipIndex = i;
+        });
+        if (flagshipIndex === -1) { isAnimating = false; return; }
+
+        // Swap slots: clicked card → flagship, old flagship → clicked card's slot
+        cardSlots[flagshipIndex] = targetOldSlot;
+        cardSlots[targetIndex] = 'flagship';
+
+        cards[flagshipIndex].setAttribute('data-slot', targetOldSlot);
+        cards[targetIndex].setAttribute('data-slot', 'flagship');
+
+        applyPositions();
+
+        setTimeout(function () {
+            isAnimating = false;
+        }, 950);
+    }
+
+    /* Auto-rotate every 5s (pauses on hover) */
+    var isHovering = false;
+    var autoRotateTimer = null;
+
+    function startAutoRotate() {
+        stopAutoRotate();
+        autoRotateTimer = setInterval(function () {
+            if (!isHovering) rotate();
+        }, 5000);
+    }
+    function stopAutoRotate() {
+        if (autoRotateTimer) {
+            clearInterval(autoRotateTimer);
+            autoRotateTimer = null;
+        }
+    }
+
+    grid.addEventListener('mouseenter', function () { isHovering = true; });
+    grid.addEventListener('mouseleave', function () { isHovering = false; });
+
+    // Click a tile → rotate until THIS card is the flagship
+    cards.forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            // Don't hijack the Explore link
+            if (e.target.closest('.pillar-link')) return;
+            if (card.getAttribute('data-slot') === 'flagship') return;
+
+            if (isMobile()) {
+                promoteToFlagship(card);
+            } else {
+                promoteDirectly(card);
+            }
+
+            // Reset auto-rotate timer so user gets a full 5s to read
+            // before it moves on
+            if (autoRotateTimer) {
+                stopAutoRotate();
+                startAutoRotate();
+            }
+        });
+    });
+
+    // Only auto-rotate when section is visible
+    if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) startAutoRotate();
+                else stopAutoRotate();
+            });
+        }, { threshold: 0.3 });
+        observer.observe(grid);
+    } else {
+        startAutoRotate();
+    }
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDEN — Social Orbit: click to open, click outside to close
+   ═══════════════════════════════════════════════════════════════════ */
+(function () {
+    var orbit = document.querySelector('.eden-orbit');
+    if (!orbit) return;
+
+    var trigger = orbit.querySelector('.eden-orbit__trigger');
+    if (!trigger) return;
+
+    // Toggle open state on trigger click
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        orbit.classList.toggle('is-open');
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+        if (orbit.classList.contains('is-open') && !orbit.contains(e.target)) {
+            orbit.classList.remove('is-open');
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') orbit.classList.remove('is-open');
+    });
+
+    // Don't close when clicking a social icon (let it navigate)
+    // Also don't close on click inside the orbit — only close on outside click or Escape
+})();

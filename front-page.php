@@ -16,7 +16,9 @@ $now = new DateTime();
 ?>
 
 <!-- ===== HERO WITH OPTIMIZED VIDEO ===== -->
-<section class="hero hero-video-section">
+<section class="hero hero-video-section" id="edenHero">
+
+
     <div class="hero-video-wrap" id="hero-video-wrap">
         <!-- Poster loads instantly — video injected by JS after page load -->
         <picture class="hero-poster-picture">
@@ -235,7 +237,7 @@ $now = new DateTime();
 
                     <div class="testimonial-card">
                         <div class="testimonial-card-inner">
-                            <p class="testimonial-text">"Eden Infosol’s strength lies in their ability to integrate
+                            <p class="testimonial-text">"Eden Infosol's strength lies in their ability to integrate
                                 multiple technologies seamlessly—networking, cloud, security, and endpoints. We no
                                 longer deal with multiple vendors; they handle it all end-to-end."</p>
                             <div class="testimonial-author">Operations Head</div>
@@ -245,7 +247,7 @@ $now = new DateTime();
 
                     <div class="testimonial-card">
                         <div class="testimonial-card-inner">
-                            <p class="testimonial-text">"We were struggling with unpredictable IT costs. With Eden’s
+                            <p class="testimonial-text">"We were struggling with unpredictable IT costs. With Eden's
                                 managed services, everything is now structured and budget-friendly without compromising
                                 on quality or response time."</p>
                             <div class="testimonial-author">Founder</div>
