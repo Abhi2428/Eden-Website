@@ -1,16 +1,74 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ===== STICKY NAVBAR =====
+    // ===== STICKY NAVBAR + SCROLL DIRECTION (HIDE ON DOWN, SHOW ON UP) =====
     const navbar = document.querySelector('.navbar');
-    function handleScroll() {
-        if (window.scrollY > 80) {
+    let lastScrollY = window.scrollY;
+    let scrollTicking = false;
+    const SCROLL_THRESHOLD = 80;   // distance from top before hide-logic kicks in
+    const SCROLL_DELTA = 8;        // ignore micro-scrolls (trackpad jitter)
+
+    function handleNavbarScroll() {
+        const currentY = window.scrollY;
+
+        // ── 1. Toggle the "scrolled" state (your existing look) ──
+        if (currentY > SCROLL_THRESHOLD) {
             navbar.classList.add('scrolled');
         } else {
             navbar.classList.remove('scrolled');
         }
+
+        // ── 2. Near the top → always show, never hide ──
+        if (currentY <= SCROLL_THRESHOLD) {
+            navbar.classList.remove('nav-hidden');
+            navbar.classList.add('nav-visible');
+            lastScrollY = currentY;
+            scrollTicking = false;
+            return;
+        }
+
+        // ── 3. Ignore tiny scroll movements (prevents flicker) ──
+        if (Math.abs(currentY - lastScrollY) < SCROLL_DELTA) {
+            scrollTicking = false;
+            return;
+        }
+
+        // ── 4. Scrolling DOWN → hide navbar ──
+        if (currentY > lastScrollY) {
+            navbar.classList.add('nav-hidden');
+            navbar.classList.remove('nav-visible');
+        }
+        // ── 5. Scrolling UP → show navbar instantly ──
+        else {
+            navbar.classList.remove('nav-hidden');
+            navbar.classList.add('nav-visible');
+        }
+
+        lastScrollY = currentY;
+        scrollTicking = false;
     }
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
+
+    // rAF-throttled scroll listener (smooth + performant)
+    function onScroll() {
+        if (!scrollTicking) {
+            window.requestAnimationFrame(handleNavbarScroll);
+            scrollTicking = true;
+        }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    handleNavbarScroll(); // init on page load
+
+    // ── Bonus: never hide the navbar while the mobile menu is open ──
+    const navLinksEl = document.querySelector('.nav-links');
+    if (navLinksEl) {
+        const menuObserver = new MutationObserver(function () {
+            if (navLinksEl.classList.contains('active')) {
+                navbar.classList.remove('nav-hidden');
+                navbar.classList.add('nav-visible');
+            }
+        });
+        menuObserver.observe(navLinksEl, { attributes: true, attributeFilter: ['class'] });
+    }
 
     // ===== LAZY LOAD HERO VIDEO (INJECT AFTER PAGE LOAD) =====
     var heroWrap = document.getElementById('hero-video-wrap');
