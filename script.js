@@ -2771,3 +2771,97 @@ document.addEventListener('DOMContentLoaded', function () {
     // Don't close when clicking a social icon (let it navigate)
     // Also don't close on click inside the orbit — only close on outside click or Escape
 })();
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("cvModal");
+    if (!modal) return;
+
+    let currentFormUrl = "";
+    let currentJobTitle = "";
+
+    const jobTitleDisplay = document.getElementById("cvJobTitleDisplay");
+    const candidateNameInput = document.getElementById("cvCandidateName");
+
+    document.addEventListener("click", function (e) {
+        const btn = e.target.closest(".career-upload-btn");
+        if (!btn) return;
+        e.preventDefault();
+
+        currentFormUrl = btn.dataset.url;
+        currentJobTitle = btn.dataset.jobTitle || "";
+
+        if (jobTitleDisplay) {
+            jobTitleDisplay.textContent = currentJobTitle
+                ? "Applying for: " + currentJobTitle
+                : "";
+        }
+
+        // NEW: close the Job Details popup immediately if it's open
+        const jobDetailsModal = document.getElementById("jobDetailsModal");
+        if (jobDetailsModal) {
+            jobDetailsModal.classList.remove("is-active");
+            jobDetailsModal.style.display = "none";
+        }
+
+        modal.classList.add("active");
+    });
+
+    document.querySelector(".cv-close")
+        .addEventListener("click", function () {
+            modal.classList.remove("active");
+        });
+
+    document.getElementById("uploadCvBtn")
+        .addEventListener("click", function () {
+            var btn = this;
+            var originalText = btn.textContent;
+            var fileInput = document.getElementById("cvFile");
+            var candidateName = candidateNameInput ? candidateNameInput.value.trim() : "";
+
+            if (!candidateName || candidateName.length < 2) {
+                alert("Please enter your full name");
+                return;
+            }
+
+            if (!fileInput.files.length) {
+                alert("Please upload your CV");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append("action", "eden_upload_cv");
+            formData.append("cv", fileInput.files[0]);
+            formData.append("candidate_name", candidateName);
+            formData.append("job_title", currentJobTitle);
+
+            btn.disabled = true;
+            btn.textContent = "Uploading...";
+
+            fetch(edenAjax.ajaxurl, {
+                method: "POST",
+                body: formData
+            })
+                .then(function (res) {
+                    if (!res.ok) {
+                        throw new Error("Server returned status " + res.status);
+                    }
+                    return res.json();
+                })
+                .then(function (data) {
+                    if (!data.success) {
+                        alert(data.data || "Upload failed. Please try again.");
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        return;
+                    }
+                    window.location.href = currentFormUrl;
+                })
+                .catch(function (err) {
+                    console.error("CV upload error:", err);
+                    alert("Something went wrong uploading your CV. Please check your connection and try again.");
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+        });
+});
