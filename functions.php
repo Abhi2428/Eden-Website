@@ -54,10 +54,14 @@ function eden_infosol_enqueue_assets()
         );
 
         // Pass AJAX URL to JavaScript (needed for contact form)
-        wp_localize_script('eden-script', 'edenAjax', array(
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('eden_assessment_nonce'),
-        ));
+        wp_localize_script(
+            'eden-script',
+            'edenAjax',
+            array(
+                'ajaxurl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('eden_assessment_nonce')
+            )
+        );
     }
 }
 add_action('wp_enqueue_scripts', 'eden_infosol_enqueue_assets');
@@ -1701,3 +1705,218 @@ function eden_handle_job_application()
 }
 add_action('admin_post_nopriv_eden_apply_job', 'eden_handle_job_application');
 add_action('admin_post_eden_apply_job', 'eden_handle_job_application');
+
+
+
+/* ==================================================
+   CAREERS — CV UPLOADS DATABASE TABLE
+================================================== */
+function eden_create_cv_uploads_table()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_cv_uploads';
+    $charset_collate = $wpdb->get_charset_collate();
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id              BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        candidate_name  VARCHAR(255) NOT NULL DEFAULT '',
+        job_title       VARCHAR(255) NOT NULL DEFAULT '',
+        file_name       VARCHAR(255) NOT NULL DEFAULT '',
+        uploaded_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+add_action('after_switch_theme', 'eden_create_cv_uploads_table');
+
+function eden_maybe_create_cv_uploads_table()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_cv_uploads';
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") !== $table_name) {
+        eden_create_cv_uploads_table();
+    }
+}
+add_action('init', 'eden_maybe_create_cv_uploads_table');
+
+/* ==================================================
+   CAREERS CV UPLOAD
+================================================== */
+
+function eden_upload_cv()
+{
+    if (empty($_FILES['cv'])) {
+        wp_send_json_error('No file uploaded');
+    }
+
+    // ─── NEW: candidate name + job title ───
+    $candidate_name = isset($_POST['candidate_name'])
+        ? sanitize_text_field(wp_unslash($_POST['candidate_name']))
+        : '';
+    $job_title = isset($_POST['job_title'])
+        ? sanitize_text_field(wp_unslash($_POST['job_title']))
+        : '';
+
+    if (strlen($candidate_name) < 2) {
+        wp_send_json_error('Please enter your full name.');
+    }
+
+    $file = $_FILES['cv'];
+    $allowed = array(
+        'pdf' => 'application/pdf',
+        'doc' => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    $check = wp_check_filetype_and_ext(
+        $file['tmp_name'],
+        $file['name'],
+        $allowed
+    );
+    if (!$check['ext']) {
+        wp_send_json_error('Only PDF, DOC and DOCX files allowed');
+    }
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    $upload_dir = wp_upload_dir();
+    $careers_dir = $upload_dir['basedir'] . '/careers';
+    if (!file_exists($careers_dir)) {
+        wp_mkdir_p($careers_dir);
+    }
+    $filename =
+        time() .
+        '-' .
+        sanitize_file_name($file['name']);
+    $target = $careers_dir . '/' . $filename;
+    move_uploaded_file(
+        $file['tmp_name'],
+        $target
+    );
+
+    // ─── NEW: save record to database ───
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_cv_uploads';
+    $wpdb->insert($table_name, array(
+        'candidate_name' => $candidate_name,
+        'job_title' => $job_title,
+        'file_name' => $filename,
+        'uploaded_at' => current_time('mysql'),
+    ));
+
+    wp_send_json_success(array(
+        'file' => $filename
+    ));
+}
+
+add_action(
+    'wp_ajax_eden_upload_cv',
+    'eden_upload_cv'
+);
+
+add_action(
+    'wp_ajax_nopriv_eden_upload_cv',
+    'eden_upload_cv'
+);
+
+/* ==================================================
+   CAREERS — VIEW UPLOADED CVs IN DASHBOARD
+================================================== */
+function eden_careers_cv_admin_menu()
+{
+    add_menu_page(
+        'CV Uploads',
+        'CV Uploads',
+        'manage_options',
+        'eden-cv-uploads',
+        'eden_careers_cv_admin_page',
+        'dashicons-media-document',
+        32
+    );
+}
+add_action('admin_menu', 'eden_careers_cv_admin_menu');
+
+function eden_careers_cv_admin_page()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'eden_cv_uploads';
+    $upload_dir = wp_upload_dir();
+    $careers_dir = $upload_dir['basedir'] . '/careers';
+    $careers_url = $upload_dir['baseurl'] . '/careers';
+
+    // ─── DELETE ACTION ───
+    if (isset($_GET['delete_cv']) && current_user_can('manage_options')) {
+        $cv_id = intval($_GET['delete_cv']);
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $cv_id));
+        if ($row) {
+            $full_path = $careers_dir . '/' . $row->file_name;
+            if (file_exists($full_path) && dirname($full_path) === $careers_dir) {
+                unlink($full_path);
+            }
+            $wpdb->delete($table_name, array('id' => $cv_id), array('%d'));
+            echo '<div class="notice notice-success"><p>CV deleted.</p></div>';
+        }
+    }
+
+    echo '<div class="wrap">';
+    echo '<h1><span class="dashicons dashicons-media-document" style="color:#d39a06;"></span> Candidate CV Uploads</h1>';
+    echo '<p style="color:#666;">All CVs uploaded via the Careers page, with candidate name and position applied for.</p>';
+
+    $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY uploaded_at DESC");
+
+    if (empty($results)) {
+        echo '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:40px;text-align:center;margin-top:20px;">';
+        echo '<span class="dashicons dashicons-media-document" style="font-size:48px;color:#ccc;"></span>';
+        echo '<p style="font-size:16px;color:#999;margin-top:16px;">No CVs uploaded yet.</p></div></div>';
+        return;
+    }
+
+    echo '<table class="widefat fixed striped" style="margin-top:20px;">';
+    echo '<thead><tr>
+            <th>Candidate Name</th>
+            <th>Position Applied For</th>
+            <th style="width:100px;">Type</th>
+            <th style="width:180px;">Uploaded</th>
+            <th style="width:220px;">Actions</th>
+          </tr></thead><tbody>';
+
+    foreach ($results as $row) {
+        $full_path = $careers_dir . '/' . $row->file_name;
+        $file_url = $careers_url . '/' . rawurlencode($row->file_name);
+        $exists = file_exists($full_path);
+        $ext = strtoupper(pathinfo($row->file_name, PATHINFO_EXTENSION));
+        $modified = date('M j, Y g:i A', strtotime($row->uploaded_at));
+
+        echo '<tr>';
+        echo '<td><strong>' . esc_html($row->candidate_name ?: '-') . '</strong></td>';
+        echo '<td><span style="background:#eef2ff;color:#122c55;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px;">' . esc_html($row->job_title ?: 'Not specified') . '</span></td>';
+        echo '<td><span style="background:#fff8e1;color:#d39a06;padding:3px 10px;border-radius:12px;font-weight:600;font-size:12px;">' . esc_html($ext) . '</span></td>';
+        echo '<td>' . esc_html($modified) . '</td>';
+
+        $download_link = '';
+        if ($exists) {
+            $download_link = '<a href="' . esc_url($file_url) . '"';
+            $download_link .= ' target="_blank" rel="noopener noreferrer"';
+            $download_link .= ' class="button button-small button-primary"';
+            $download_link .= ' title="View / Download">';
+            $download_link .= '<span class="dashicons dashicons-download" style="margin-top:3px;"></span> View';
+            $download_link .= '</a> ';
+        } else {
+            $download_link = '<span style="color:#c62828;font-size:12px;">File missing</span> ';
+        }
+
+        $delete_url = admin_url('admin.php?page=eden-cv-uploads&delete_cv=' . $row->id);
+
+        $delete_link = '<a href="' . esc_url($delete_url) . '"';
+        $delete_link .= ' class="button button-small"';
+        $delete_link .= ' style="color:#c62828;"';
+        $delete_link .= ' title="Delete"';
+        $delete_link .= ' onclick="return confirm(\'Delete this CV permanently?\');">';
+        $delete_link .= '&#128465;';
+        $delete_link .= '</a>';
+
+        echo '<td>' . $download_link . $delete_link . '</td>';
+        echo '</tr>';
+    }
+
+    echo '</tbody></table>';
+    echo '<p style="margin-top:15px;color:#666;">Total: ' . count($results) . ' application(s).</p>';
+    echo '</div>';
+}

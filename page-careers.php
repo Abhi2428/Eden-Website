@@ -126,10 +126,11 @@ $ms_forms_url = 'https://forms.office.com/Pages/ResponsePage.aspx?id=nWi5z2NTuke
                             View Details <i class="fas fa-arrow-right"></i>
                         </button>
 
-                        <a href="<?php echo esc_url($ms_forms_url); ?>" target="_blank" rel="noopener noreferrer"
-                            class="btn-apply-now">
+                        <button type="button" class="btn-apply-now career-upload-btn"
+                            data-url="<?php echo esc_url($ms_forms_url); ?>"
+                            data-job-title="<?php echo esc_attr($job_title); ?>">
                             <i class="fas fa-paper-plane"></i> Apply Now
-                        </a>
+                        </button>
                     </div>
                 </div>
             <?php endwhile; ?>
@@ -161,10 +162,10 @@ $ms_forms_url = 'https://forms.office.com/Pages/ResponsePage.aspx?id=nWi5z2NTuke
 
         <div class="job-modal-footer">
             <button type="button" class="btn-modal-cancel" id="modalCancelBtn">Close</button>
-            <a href="<?php echo esc_url($ms_forms_url); ?>" target="_blank" rel="noopener noreferrer"
-                class="btn-modal-apply">
+            <button type="button" class="btn-modal-apply career-upload-btn" id="modalApplyBtn"
+                data-url="<?php echo esc_url($ms_forms_url); ?>" data-job-title="">
                 <i class="fas fa-paper-plane"></i> Apply Now
-            </a>
+            </button>
         </div>
     </div>
 </div>
@@ -198,6 +199,8 @@ $ms_forms_url = 'https://forms.office.com/Pages/ResponsePage.aspx?id=nWi5z2NTuke
                     '<div class="modal-meta-item"><span class="meta-label">Department</span><span class="meta-value">' + dept + '</span></div>';
 
                 modalDesc.innerHTML = description || '<p>No description available.</p>';
+                var modalApplyBtn = document.getElementById('modalApplyBtn');
+                if (modalApplyBtn) modalApplyBtn.setAttribute('data-job-title', title);
 
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
@@ -224,5 +227,21 @@ $ms_forms_url = 'https://forms.office.com/Pages/ResponsePage.aspx?id=nWi5z2NTuke
         });
     });
 </script>
+
+<div id="cvModal" class="cv-modal">
+    <div class="cv-modal-content">
+        <button class="cv-close">
+            ×
+        </button>
+        <h3>Upload Your CV</h3>
+        <p id="cvJobTitleDisplay" style="color:#666;font-size:.9rem;margin:-10px 0 15px;"></p>
+        <input type="text" id="cvCandidateName" placeholder="Your Full Name"
+            style="width:100%;padding:10px 14px;margin-bottom:14px;border:1.5px solid #cfd5df;border-radius:8px;font-size:.95rem;">
+        <input type="file" id="cvFile" accept=".pdf,.doc,.docx">
+        <button id="uploadCvBtn">
+            Upload & Continue
+        </button>
+    </div>
+</div>
 
 <?php get_footer(); ?>

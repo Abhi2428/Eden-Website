@@ -5354,6 +5354,51 @@ body>.job-modal.active {
     background: #0f172a;
 }
 
+.cv-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .6);
+    z-index: 999999;
+}
+
+.cv-modal.active {
+    display: flex;
+}
+
+.cv-modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+}
+
+.cv-close {
+    float: right;
+    border: 0;
+    background: none;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+#cvFile {
+    width: 100%;
+    margin: 20px 0;
+}
+
+#uploadCvBtn {
+    background: #d39a06;
+    color: #fff;
+    border: 0;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
 /* =========================================================
    09. ANIMATIONS / RESPONSIVE / PRINT
    ========================================================= */
